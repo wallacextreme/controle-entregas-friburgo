@@ -1,0 +1,13 @@
+# Temporary & scratch files
+scratch/
+gemini-code-*.md
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+node_modules/
+
+# Local IDE & agent metadata
+.gemini/
+.vscode/
+.idea/
