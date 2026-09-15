@@ -1,0 +1,2437 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Controle de Entregas — Autopeças</title>
+    <meta name="description" content="Sistema de controle de entregas para autopeças - Nova Friburgo RJ">
+    <meta name="theme-color" content="#1e293b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.webmanifest">
+    <style>
+/* ============================================================
+   DESIGN SYSTEM — CSS Variables, Reset, Components
+   ============================================================ */
+:root {
+    --primary: #3b82f6; --primary-hover: #2563eb; --primary-light: #dbeafe;
+    --success: #22c55e; --success-hover: #16a34a; --success-light: #dcfce7;
+    --warning: #f59e0b; --warning-hover: #d97706; --warning-light: #fef3c7;
+    --danger: #ef4444; --danger-hover: #dc2626; --danger-light: #fee2e2;
+    --info: #6366f1;
+    --bg: #f1f5f9; --bg-card: #ffffff; --bg-elevated: #f8fafc;
+    --border: #e2e8f0; --border-focus: #3b82f6;
+    --text: #1e293b; --text-sec: #475569; --text-muted: #94a3b8; --text-inv: #ffffff;
+    --font: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono: "SF Mono", SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    --radius: 8px; --radius-lg: 12px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+    --shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,.1), 0 4px 6px rgba(0,0,0,.05);
+    --transition: 150ms ease;
+}
+[data-theme="dark"] {
+    --bg: #0f172a; --bg-card: #1e293b; --bg-elevated: #1e293b;
+    --border: #334155; --border-focus: #60a5fa;
+    --text: #f1f5f9; --text-sec: #cbd5e1; --text-muted: #64748b;
+    --primary-light: #1e3a5f; --success-light: #14532d; --warning-light: #451a03; --danger-light: #450a0a;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.2); --shadow: 0 1px 3px rgba(0,0,0,.3);
+    --shadow-md: 0 4px 6px rgba(0,0,0,.3); --shadow-lg: 0 10px 15px rgba(0,0,0,.4);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+    font-family: var(--font); background: var(--bg); color: var(--text);
+    min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased;
+}
+input, select, textarea, button { font-family: inherit; font-size: inherit; }
+button { cursor: pointer; border: none; background: none; }
+a { color: var(--primary); text-decoration: none; }
+
+/* == HEADER == */
+.app-header {
+    background: #1e293b; color: #fff; padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-md);
+}
+.header-brand h1 { font-size: 16px; font-weight: 700; letter-spacing: .5px; color: #60a5fa; }
+.header-brand span { font-size: 11px; color: #94a3b8; font-weight: 500; }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.header-date { font-size: 13px; font-family: var(--mono); color: #cbd5e1; }
+.header-btn {
+    background: rgba(255,255,255,.1); border-radius: 6px; padding: 6px 10px;
+    color: #cbd5e1; font-size: 12px; font-weight: 600; transition: var(--transition);
+    display: flex; align-items: center; gap: 4px;
+}
+.header-btn:hover { background: rgba(255,255,255,.2); color: #fff; }
+
+/* == TABS == */
+.tab-nav {
+    display: flex; background: var(--bg-card); border-bottom: 2px solid var(--border);
+    position: sticky; top: 52px; z-index: 99; overflow-x: auto;
+}
+.tab-btn {
+    flex: 1; padding: 12px 16px; font-size: 12px; font-weight: 700;
+    letter-spacing: .8px; color: var(--text-muted); border-bottom: 3px solid transparent;
+    transition: var(--transition); white-space: nowrap; text-align: center;
+    min-width: 100px;
+}
+.tab-btn:hover { color: var(--text-sec); background: var(--bg-elevated); }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+.tab-view { display: none; padding: 16px; max-width: 1400px; margin: 0 auto; }
+.tab-view.active { display: block; }
+
+/* == DASHBOARD == */
+.dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.dash-card {
+    background: var(--bg-card); border-radius: var(--radius); padding: 14px;
+    border-left: 4px solid var(--border); box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+.dash-card:hover { box-shadow: var(--shadow); }
+.dash-card .dash-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); }
+.dash-card .dash-value { font-size: 22px; font-weight: 700; margin-top: 4px; color: var(--text); }
+.dash-card.blue { border-left-color: var(--primary); }
+.dash-card.green { border-left-color: var(--success); }
+.dash-card.yellow { border-left-color: var(--warning); }
+.dash-card.red { border-left-color: var(--danger); }
+.dash-card.purple { border-left-color: var(--info); }
+.dash-card .dash-value.green-text { color: var(--success); }
+.dash-card .dash-value.yellow-text { color: var(--warning); }
+.dash-card .dash-value.red-text { color: var(--danger); }
+
+/* == ACTION BAR == */
+.action-bar {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; align-items: center;
+}
+.btn-primary {
+    background: var(--primary); color: #fff; padding: 10px 20px; border-radius: var(--radius);
+    font-weight: 700; font-size: 13px; transition: var(--transition);
+    display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+}
+.btn-primary:hover { background: var(--primary-hover); box-shadow: var(--shadow); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+.btn-success { background: var(--success); color: #fff; padding: 10px 20px; border-radius: var(--radius); font-weight: 700; font-size: 13px; transition: var(--transition); box-shadow: var(--shadow-sm); }
+.btn-success:hover { background: var(--success-hover); }
+.btn-success:disabled { opacity: .5; cursor: not-allowed; }
+.btn-danger { background: var(--danger); color: #fff; padding: 8px 16px; border-radius: var(--radius); font-weight: 600; font-size: 12px; transition: var(--transition); }
+.btn-danger:hover { background: var(--danger-hover); }
+.btn-outline {
+    background: var(--bg-card); color: var(--text-sec); border: 1px solid var(--border);
+    padding: 8px 14px; border-radius: var(--radius); font-weight: 600; font-size: 12px;
+    transition: var(--transition);
+}
+.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+.btn-outline.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+.btn-sm { padding: 6px 10px; font-size: 11px; }
+.btn-lg { padding: 14px 24px; font-size: 15px; }
+.search-input {
+    flex: 1; min-width: 180px; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: var(--radius); font-size: 13px; background: var(--bg-card);
+    color: var(--text); outline: none; transition: var(--transition);
+}
+.search-input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+.filter-select {
+    padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 12px; font-weight: 600; background: var(--bg-card); color: var(--text);
+    outline: none; cursor: pointer; min-width: 120px;
+}
+.filter-select:focus { border-color: var(--border-focus); }
+
+/* == KANBAN == */
+.kanban { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; min-height: 300px; }
+.kanban-col {
+    background: var(--bg-elevated); border-radius: var(--radius-lg); padding: 8px;
+    min-height: 200px; display: flex; flex-direction: column;
+}
+.kanban-col-header {
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .8px;
+    color: var(--text-muted); padding: 8px; display: flex; align-items: center; gap: 8px;
+    border-bottom: 2px solid var(--border); margin-bottom: 8px;
+}
+.kanban-col-header .col-count {
+    background: var(--border); border-radius: 10px; padding: 1px 8px;
+    font-size: 11px; font-weight: 700; color: var(--text-sec);
+}
+.kanban-cards { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 50px; }
+.kanban-col.drag-over { background: var(--primary-light); border: 2px dashed var(--primary); }
+
+/* == KANBAN CARD == */
+.k-card {
+    background: var(--bg-card); border-radius: var(--radius); padding: 12px;
+    box-shadow: var(--shadow-sm); border: 1px solid var(--border);
+    cursor: grab; transition: var(--transition); position: relative;
+}
+.k-card:hover { box-shadow: var(--shadow); }
+.k-card.dragging { opacity: .5; transform: rotate(2deg); }
+.k-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.k-card-order { font-weight: 800; font-size: 14px; color: var(--text); }
+.k-card-time {
+    font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+    font-family: var(--mono);
+}
+.k-card-time.delay-green { background: var(--success-light); color: #15803d; }
+.k-card-time.delay-yellow { background: var(--warning-light); color: #92400e; }
+.k-card-time.delay-red { background: var(--danger-light); color: #dc2626; font-weight: 800; }
+.k-card-dest { font-size: 12px; color: var(--text-sec); font-weight: 600; margin-bottom: 4px; }
+.k-card-axis { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; background: var(--bg-elevated); color: var(--text-muted); display: inline-block; margin-bottom: 6px; }
+.k-card-motoboy { font-size: 11px; color: var(--info); font-weight: 600; margin-bottom: 6px; }
+.k-card-motoboy.unassigned { color: var(--text-muted); font-style: italic; }
+.k-card-financial { display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; margin-bottom: 8px; }
+.k-card-badge { padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 10px; }
+.badge-pay { background: #e0e7ff; color: #3730a3; }
+.badge-value { background: var(--bg-elevated); color: var(--text); }
+.badge-change { background: var(--warning-light); color: #92400e; }
+.badge-fee { background: var(--success-light); color: #15803d; }
+.k-card-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+.k-card-actions button {
+    padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 700;
+    transition: var(--transition); display: flex; align-items: center; gap: 3px;
+}
+.k-action-advance { background: var(--success); color: #fff; }
+.k-action-advance:hover { background: var(--success-hover); }
+.k-action-motoboy { background: var(--info); color: #fff; }
+.k-action-edit { background: var(--bg-elevated); color: var(--text-sec); border: 1px solid var(--border); }
+.k-action-edit:hover { border-color: var(--primary); color: var(--primary); }
+.k-action-back { background: var(--bg-elevated); color: var(--text-muted); border: 1px solid var(--border); }
+.k-action-cancel { color: var(--danger); background: var(--danger-light); }
+.k-action-occur { background: var(--warning-light); color: #92400e; }
+
+/* == MOTOBOY VIEW == */
+.motoboy-header { text-align: center; padding: 16px; }
+.motoboy-header label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 8px; }
+.motoboy-select {
+    width: 100%; max-width: 320px; padding: 14px 16px; border: 2px solid var(--border);
+    border-radius: var(--radius-lg); font-size: 16px; font-weight: 700;
+    background: var(--bg-card); color: var(--text); text-align: center; outline: none;
+}
+.motoboy-select:focus { border-color: var(--primary); }
+.motoboy-empty { text-align: center; padding: 40px 16px; color: var(--text-muted); }
+.motoboy-empty p { font-size: 14px; margin-top: 8px; }
+
+/* Mobile Delivery Card */
+.m-card {
+    background: var(--bg-card); border-radius: var(--radius-lg); padding: 16px;
+    box-shadow: var(--shadow); margin-bottom: 12px; border: 1px solid var(--border);
+}
+.m-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.m-card-order { font-size: 20px; font-weight: 800; }
+.m-card-status { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; }
+.m-card-status.status-ready { background: var(--primary-light); color: var(--primary); }
+.m-card-status.status-out { background: var(--warning-light); color: #92400e; }
+.m-card-dest { margin-bottom: 12px; }
+.m-card-dest .bairro { font-size: 16px; font-weight: 700; }
+.m-card-dest .eixo { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+.m-card-dest .endereco { font-size: 13px; color: var(--text-sec); margin-top: 4px; }
+.m-card-finance { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.m-card-finance .fin-item { padding: 6px 12px; border-radius: var(--radius); font-size: 13px; font-weight: 700; }
+.fin-valor { background: var(--bg-elevated); color: var(--text); border: 1px solid var(--border); }
+.fin-pay { background: #e0e7ff; color: #3730a3; }
+.fin-change { background: var(--warning-light); color: #92400e; }
+.fin-fee { background: var(--success-light); color: #15803d; }
+.m-card-nav { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.m-card-nav a {
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    padding: 12px; border-radius: var(--radius); font-size: 12px; font-weight: 700;
+    text-decoration: none; color: #fff; transition: var(--transition); min-height: 48px;
+}
+.nav-waze { background: #33ccff; }
+.nav-waze:hover { background: #28b5e0; }
+.nav-maps { background: #4285f4; }
+.nav-maps:hover { background: #3275e0; }
+.nav-whatsapp { background: #25d366; }
+.nav-whatsapp:hover { background: #1fb855; }
+.m-card-main-action {
+    width: 100%; padding: 16px; border-radius: var(--radius-lg); font-size: 16px;
+    font-weight: 800; color: #fff; transition: var(--transition); margin-bottom: 8px;
+    min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.m-card-main-action.action-depart { background: var(--primary); }
+.m-card-main-action.action-depart:hover { background: var(--primary-hover); }
+.m-card-main-action.action-complete { background: var(--success); }
+.m-card-main-action.action-complete:hover { background: var(--success-hover); }
+.m-card-main-action:disabled { opacity: .5; cursor: not-allowed; }
+.m-card-secondary {
+    width: 100%; padding: 10px; border-radius: var(--radius); font-size: 12px;
+    font-weight: 600; background: var(--warning-light); color: #92400e; transition: var(--transition);
+}
+.m-card-timer { font-size: 12px; font-family: var(--mono); font-weight: 700; }
+.m-card-timer.delay-green { color: var(--success); }
+.m-card-timer.delay-yellow { color: var(--warning); }
+.m-card-timer.delay-red { color: var(--danger); }
+
+/* == ACERTO VIEW == */
+.acerto-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; align-items: center; }
+.acerto-summary {
+    background: var(--bg-card); border-radius: var(--radius-lg); padding: 20px;
+    box-shadow: var(--shadow); margin-bottom: 16px; border: 1px solid var(--border);
+}
+.acerto-summary h3 { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+.acerto-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.acerto-item { padding: 12px; background: var(--bg-elevated); border-radius: var(--radius); }
+.acerto-item .label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
+.acerto-item .value { font-size: 20px; font-weight: 700; margin-top: 2px; }
+.acerto-item .value.success { color: var(--success); }
+.acerto-item .value.warning { color: var(--warning); }
+.acerto-item .value.danger { color: var(--danger); }
+.divergence-alert {
+    background: var(--danger-light); border: 2px solid var(--danger); border-radius: var(--radius);
+    padding: 12px 16px; margin: 12px 0; font-weight: 700; color: var(--danger);
+}
+.settlement-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; display: block; overflow-x: auto; white-space: nowrap; }
+.settlement-table th {
+    background: var(--bg-elevated); padding: 8px 12px; text-align: left;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+}
+.settlement-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text-sec); }
+.settlement-table tr:hover { background: var(--bg-elevated); }
+.settlement-input {
+    width: 140px; padding: 8px 12px; border: 2px solid var(--border); border-radius: var(--radius);
+    font-size: 16px; font-weight: 700; text-align: right; background: var(--bg-card); color: var(--text);
+}
+.settlement-input:focus { border-color: var(--primary); outline: none; }
+
+/* == FORMS == */
+.form-group { margin-bottom: 12px; }
+.form-label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 4px; }
+.form-input {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 16px; background: var(--bg-card); color: var(--text); outline: none; transition: var(--transition);
+}
+.form-input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+.form-select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 16px; background: var(--bg-card); color: var(--text); outline: none; cursor: pointer; }
+.form-select:focus { border-color: var(--border-focus); }
+.form-grid { display: grid; gap: 12px; }
+.form-grid-2 { grid-template-columns: 1fr 1fr; }
+.form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.form-highlight { background: var(--warning-light) !important; border-color: var(--warning) !important; }
+.form-info-bar {
+    background: var(--primary-light); padding: 10px 14px; border-radius: var(--radius);
+    font-size: 12px; font-weight: 600; color: var(--primary); margin-bottom: 12px;
+    display: flex; gap: 16px;
+}
+.form-toggle-details {
+    padding: 8px 14px; font-size: 11px; font-weight: 600; color: var(--text-muted);
+    cursor: pointer; text-align: center; border: 1px dashed var(--border);
+    border-radius: var(--radius); margin: 8px 0; transition: var(--transition);
+}
+.form-toggle-details:hover { color: var(--primary); border-color: var(--primary); }
+.form-details { display: none; }
+.form-details.show { display: block; }
+
+/* == MODALS == */
+.modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000;
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+    opacity: 0; visibility: hidden; transition: opacity .2s, visibility .2s;
+}
+.modal-overlay.visible { opacity: 1; visibility: visible; }
+.modal-container {
+    background: var(--bg-card); border-radius: var(--radius-lg); width: 100%;
+    max-width: 560px; max-height: 90vh; display: flex; flex-direction: column;
+    box-shadow: var(--shadow-lg); transform: translateY(20px); transition: transform .2s;
+}
+.modal-overlay.visible .modal-container { transform: translateY(0); }
+.modal-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h2 { font-size: 16px; font-weight: 700; }
+.modal-close {
+    width: 32px; height: 32px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; font-size: 20px;
+    color: var(--text-muted); transition: var(--transition);
+}
+.modal-close:hover { background: var(--bg-elevated); color: var(--text); }
+.modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* == TOASTS == */
+.toast-container { position: fixed; bottom: 80px; right: 16px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+    padding: 12px 20px; border-radius: var(--radius); font-size: 13px; font-weight: 600;
+    box-shadow: var(--shadow-md); animation: toastIn .3s ease; min-width: 250px; max-width: 400px;
+    display: flex; align-items: center; gap: 8px;
+}
+.toast.success { background: #15803d; color: #fff; }
+.toast.error { background: #dc2626; color: #fff; }
+.toast.warning { background: #d97706; color: #fff; }
+.toast.info { background: #2563eb; color: #fff; }
+.toast.fade-out { animation: toastOut .3s ease forwards; }
+@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(10px); } }
+
+/* == PWA INSTALL == */
+.pwa-banner {
+    position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card);
+    padding: 12px 16px; box-shadow: 0 -2px 10px rgba(0,0,0,.1);
+    display: flex; align-items: center; justify-content: space-between; z-index: 500;
+    border-top: 2px solid var(--primary); display: none;
+}
+.pwa-banner.visible { display: flex; }
+.pwa-banner p { font-size: 13px; font-weight: 600; color: var(--text); }
+
+/* == LOADING == */
+.loading-text { display: inline-block; color: var(--text-muted); font-size: 12px; font-weight: 600; }
+.loading-text::after { content: '...'; animation: dots 1.2s steps(4, end) infinite; }
+@keyframes dots { 0%,20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%,100% { content: '...'; } }
+
+/* == OCCURRENCE BADGE == */
+.occurrence-badge { font-size: 9px; background: var(--warning-light); color: #92400e; padding: 1px 5px; border-radius: 4px; font-weight: 700; }
+
+/* == PRINT == */
+.print-only { display: none; }
+@media print {
+    body { background: #fff !important; color: #000 !important; font-size: 10pt; }
+    .app-header, .tab-nav, .tab-view, .modal-overlay, .toast-container, .pwa-banner, .no-print { display: none !important; }
+    .print-only { display: block !important; padding: 20px; }
+    .print-only h1 { font-size: 16pt; margin-bottom: 4px; }
+    .print-only h2 { font-size: 13pt; margin: 12px 0 6px; border-bottom: 1px solid #999; padding-bottom: 4px; }
+    .print-only table { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 8px 0; }
+    .print-only th { background: #eee; padding: 4px 6px; text-align: left; font-size: 8pt; text-transform: uppercase; border: 1px solid #ccc; }
+    .print-only td { padding: 4px 6px; border: 1px solid #ddd; }
+    .print-only tr:nth-child(even) { background: #f9f9f9; }
+    .print-only .print-summary { margin: 10px 0; padding: 10px; border: 1px solid #999; }
+    .print-only .print-summary p { font-size: 10pt; margin: 2px 0; }
+    .print-only .print-footer { margin-top: 20px; border-top: 1px solid #999; padding-top: 8px; font-size: 8pt; color: #666; }
+}
+
+/* == RESPONSIVE == */
+@media (max-width: 1024px) {
+    .kanban { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+    .app-header { padding: 10px 12px; }
+    .header-brand h1 { font-size: 14px; }
+    .tab-view { padding: 10px; }
+    .dashboard { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .dash-card { padding: 10px; }
+    .dash-card .dash-value { font-size: 18px; }
+    .kanban { grid-template-columns: 1fr; gap: 10px; }
+    .kanban-col { min-height: 100px; }
+    .action-bar { flex-direction: column; }
+    .search-input { min-width: unset; width: 100%; }
+    .btn-primary { width: 100%; justify-content: center; }
+    .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+    .modal-container { max-width: 100%; margin: 8px; }
+    .toast-container { left: 16px; right: 16px; bottom: 70px; }
+    .toast { min-width: unset; width: 100%; }
+    .acerto-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+    .dashboard { grid-template-columns: 1fr 1fr; }
+    .acerto-grid { grid-template-columns: 1fr; }
+    .header-date { display: none; }
+}
+    @media print {
+    .app-header, .app-nav, .tab-nav, .search-bar, .modal-overlay, button, .kanban-board { display: none !important; }
+    .app-content { padding: 0 !important; margin: 0 !important; }
+    #viewAcerto { display: block !important; }
+    .acerto-summary { break-inside: avoid; border: 1px solid #000; padding: 10px; margin-bottom: 20px; }
+    .settlement-table { width: 100%; border-collapse: collapse; }
+    .settlement-table th, .settlement-table td { border: 1px solid #000; padding: 4px; font-size: 10px; }
+}
+</style>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-brand">
+                <h1>CONTROLE DE ENTREGAS</h1>
+                <span>Autopeças · Nova Friburgo</span>
+            </div>
+            <div class="header-right">
+                <span class="header-date" id="headerDate"></span>
+                <button class="header-btn" id="btnManageMotoboys" title="Motoboys">🏍</button>
+                <button class="header-btn" id="btnBackup" title="Backup">💾</button>
+                <button class="header-btn" id="btnPrint" title="Imprimir">🖨</button>
+                <button class="header-btn" id="btnTheme" title="Tema">🌙</button>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <nav class="tab-nav" id="tabNav">
+            <button class="tab-btn active" data-tab="expedicao">EXPEDIÇÃO</button>
+            <button class="tab-btn" data-tab="motoboy">MINHAS ENTREGAS</button>
+            <button class="tab-btn" data-tab="acerto">ACERTO</button>
+        </nav>
+
+        <!-- TAB: Expedição -->
+        <main id="viewExpedicao" class="tab-view active">
+            <section class="dashboard" id="dashboard"></section>
+            <div class="action-bar">
+                <button class="btn-primary" id="btnNewDelivery">+ NOVA ENTREGA</button>
+                <input class="search-input" id="searchInput" placeholder="Buscar pedido, bairro, motoboy, cliente..." aria-label="Buscar entrega">
+                <select class="filter-select" id="filterStatus" aria-label="Filtrar por status">
+                    <option value="all">Todos</option>
+                    <option value="PREPARO">Em Preparo</option>
+                    <option value="READY">Prontos</option>
+                    <option value="OUT_FOR_DELIVERY">Em Rota</option>
+                    <option value="DELIVERED">Entregues</option>
+                    <option value="SETTLEMENT_PENDING">Pendente Acerto</option>
+                    <option value="SETTLED">Acertados</option>
+                    <option value="DELAYED">Atrasados</option>
+                </select>
+                <select class="filter-select" id="filterMotoboyExp" aria-label="Filtrar por motoboy">
+                    <option value="">Todos Motoboys</option>
+                </select>
+            </div>
+            <div class="kanban" id="kanbanBoard">
+                <div class="kanban-col" data-status="PREPARO" id="colPreparo">
+                    <div class="kanban-col-header">Em Preparo <span class="col-count" id="countPreparo">0</span></div>
+                    <div class="kanban-cards" data-col="PREPARO"></div>
+                </div>
+                <div class="kanban-col" data-status="READY" id="colReady">
+                    <div class="kanban-col-header">Pronto <span class="col-count" id="countReady">0</span></div>
+                    <div class="kanban-cards" data-col="READY"></div>
+                </div>
+                <div class="kanban-col" data-status="OUT_FOR_DELIVERY" id="colOut">
+                    <div class="kanban-col-header">Em Rota <span class="col-count" id="countOut">0</span></div>
+                    <div class="kanban-cards" data-col="OUT_FOR_DELIVERY"></div>
+                </div>
+                <div class="kanban-col" data-status="RETURN_PENDING" id="colReturns">
+                    <div class="kanban-col-header" style="color:var(--danger)">Retornos <span class="col-count" id="countReturns">0</span></div>
+                    <div class="kanban-cards" data-col="RETURN_PENDING"></div>
+                </div>
+                <div class="kanban-col" data-status="DELIVERED" id="colDelivered">
+                    <div class="kanban-col-header">Entregue / Acerto <span class="col-count" id="countDelivered">0</span></div>
+                    <div class="kanban-cards" data-col="DELIVERED"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- TAB: Motoboy -->
+        <main id="viewMotoboy" class="tab-view">
+            <div class="motoboy-header">
+                <label for="motoboyViewSelect">MOTOBOY</label>
+                <select class="motoboy-select" id="motoboyViewSelect">
+                    <option value="">Selecione seu nome...</option>
+                </select>
+            </div>
+            <div id="motoboyDeliveries"></div>
+        </main>
+
+        <!-- TAB: Acerto -->
+        <main id="viewAcerto" class="tab-view">
+            <div class="acerto-filters">
+                <input type="date" class="form-input" id="acertoDate" style="max-width:180px" aria-label="Data do acerto">
+                <select class="filter-select" id="acertoMotoboyFilter" aria-label="Motoboy para acerto">
+                    <option value="">Todos Motoboys</option>
+                </select>
+                <button class="btn-primary btn-sm" id="btnPrintSettlement">🖨 Imprimir Fechamento</button>
+            </div>
+            <div id="acertoContent"></div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-container" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <h2 id="modalTitle"></h2>
+                <button class="modal-close" id="modalClose" aria-label="Fechar">×</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer" id="modalFooter"></div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+    <!-- Print -->
+    <div class="print-only" id="printContainer"></div>
+
+    <!-- PWA Install Banner -->
+    <div class="pwa-banner" id="pwaBanner">
+        <p>📲 Instalar aplicativo</p>
+        <div style="display:flex;gap:8px">
+            <button class="btn-primary btn-sm" id="btnInstallPwa">Instalar</button>
+            <button class="btn-outline btn-sm" id="btnDismissPwa">Agora não</button>
+        </div>
+    </div>
+
+<script>
+"use strict";
+/* ================================================================
+   1. CONFIGURATION & CONSTANTS
+   ================================================================ */
+const APP_CONFIG = {
+    version: '4.0.2',
+    name: 'Controle de Entregas',
+    dbName: 'LogisticaFriburgoDBv3',
+    dbVersion: 2,
+    timerIntervalMs: 30000,
+    toastDurationMs: 3000,
+    formDraftKey: 'ce_form_draft',
+    themeKey: 'ce_theme',
+    motoboySelectionKey: 'ce_motoboy_sel',
+};
+
+const STORE_CONFIG = { name: 'Autopeças Nova Friburgo', city: 'Nova Friburgo', state: 'RJ' };
+
+const NEIGHBORHOODS = [
+    { name: 'Centro',              axis: 'Centro',    feeCents: 800,  district: false },
+    { name: 'Braunes',             axis: 'Centro',    feeCents: 1000, district: false },
+    { name: 'Vila Amélia',         axis: 'Centro',    feeCents: 800,  district: false },
+    { name: 'Olaria',              axis: 'Sul',       feeCents: 1000, district: false },
+    { name: 'Cônego',              axis: 'Sul',       feeCents: 1200, district: false },
+    { name: 'Cascatinha',          axis: 'Sul',       feeCents: 1200, district: false },
+    { name: 'Conselheiro Paulino', axis: 'Norte',     feeCents: 1200, district: false },
+    { name: 'Duas Pedras',         axis: 'Norte',     feeCents: 1000, district: false },
+    { name: 'Mury',                axis: 'Distritos', feeCents: 1800, district: true },
+    { name: 'Lumiar',              axis: 'Distritos', feeCents: 4500, district: true },
+    { name: 'São Pedro da Serra',  axis: 'Distritos', feeCents: 5000, district: true },
+];
+
+const DELAY_THRESHOLDS = { normal: { green: 20, yellow: 35 }, district: { green: 20, yellow: 50 } };
+
+const STATUS = {
+    PREPARO: 'PREPARO', READY: 'READY', OUT_FOR_DELIVERY: 'OUT_FOR_DELIVERY',
+    DELIVERED: 'DELIVERED', RETURN_PENDING: 'RETURN_PENDING', SETTLEMENT_PENDING: 'SETTLEMENT_PENDING',
+    SETTLED: 'SETTLED', CANCELLED: 'CANCELLED',
+};
+
+const STATUS_LABELS = {
+    PREPARO: 'Em Preparo', READY: 'Pronto', OUT_FOR_DELIVERY: 'Em Rota',
+    DELIVERED: 'Entregue', RETURN_PENDING: 'Retorno', SETTLEMENT_PENDING: 'Pend. Acerto',
+    SETTLED: 'Acertado', CANCELLED: 'Cancelado',
+};
+
+const STATUS_TRANSITIONS = {
+    PREPARO: ['READY', 'CANCELLED'],
+    READY: ['OUT_FOR_DELIVERY', 'PREPARO', 'CANCELLED'],
+    OUT_FOR_DELIVERY: ['DELIVERED', 'RETURN_PENDING', 'CANCELLED'],
+    RETURN_PENDING: ['READY', 'PREPARO', 'CANCELLED'],
+    DELIVERED: ['SETTLEMENT_PENDING'],
+    SETTLEMENT_PENDING: ['SETTLED'],
+    SETTLED: [], CANCELLED: ['PREPARO'],
+};
+
+const PAYMENT_METHODS = ['Dinheiro','Pix','Cartão de Crédito','Cartão de Débito','Pago no App 99'];
+
+const OCCURRENCE_TYPES = ['Cliente ausente','Endereço incorreto','Recusou pedido','Problema no pagamento','Problema operacional','Outro'];
+
+/* ================================================================
+   2. UTILITIES
+   ================================================================ */
+function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function parseMoneyToCents(v) {
+    if (typeof v === 'number') return Math.round(v * 100);
+    if (typeof v === 'string') {
+        let clean = v.replace(/[^\d,.\-]/g, '');
+        if (clean.includes(',')) {
+            clean = clean.replace(/\./g, '').replace(',', '.');
+        }
+        const parsed = parseFloat(clean);
+        return isNaN(parsed) ? 0 : Math.round(parsed * 100);
+    }
+    return 0;
+}
+function formatCents(c) { return 'R$ ' + (Math.abs(c||0)/100).toFixed(2).replace('.',','); }
+function now() { return new Date().toISOString(); }
+function formatTime(iso) { if (!iso) return '--:--'; try { return new Date(iso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); } catch(e) { return '--:--'; } }
+function formatDate(iso) { if (!iso) return '--/--/----'; try { return new Date(iso).toLocaleDateString('pt-BR'); } catch(e) { return '--/--/----'; } }
+function formatDateTime(iso) { return iso ? formatDate(iso) + ' ' + formatTime(iso) : ''; }
+function getElapsedMin(iso) { if (!iso) return 0; return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000)); }
+function getDelayLevel(min, dist) {
+    const t = dist ? DELAY_THRESHOLDS.district : DELAY_THRESHOLDS.normal;
+    if (min < t.green) return 'green'; if (min < t.yellow) return 'yellow'; return 'red';
+}
+function getNeighborhoodConfig(name) { if (!name) return null; const n = name.trim().toLowerCase(); return NEIGHBORHOODS.find(x => x.name.toLowerCase() === n) || null; }
+function getDeliveryFee(name) { const c = getNeighborhoodConfig(name); return c ? c.feeCents : 0; }
+function isDistrictNeighborhood(name) { const c = getNeighborhoodConfig(name); return c ? c.district : false; }
+function todayISO() { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function isoToDateStr(iso) { if (!iso) return ''; try { const d = new Date(iso); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); } catch(e) { return ''; } }
+function buildWazeUrl(del) {
+    const a = del.destination; let q = a.endereco ? `${a.endereco}${a.numero ? ', '+a.numero : ''}, ${a.bairro}, Nova Friburgo, RJ` : `${a.bairro}, Nova Friburgo, RJ`;
+    return 'https://waze.com/ul?q='+encodeURIComponent(q)+'&navigate=yes';
+}
+function buildMapsUrl(del) {
+    const a = del.destination; let q = a.endereco ? `${a.endereco}${a.numero ? ', '+a.numero : ''}, ${a.bairro}, Nova Friburgo, RJ` : `${a.bairro}, Nova Friburgo, RJ`;
+    return 'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(q);
+}
+function buildWhatsAppUrl(del) {
+    let totalCents = (del.financial.productValueCents || 0) + (del.financial.deliveryFeeCents || 0);
+    let msg = `Olá! Seu pedido #${del.orderNum} acabou de sair para entrega. Previsão de chegada em breve. Total: ${formatCents(totalCents)}`;
+    if (del.financial.deliveryFeeCents > 0) msg += ` (Produtos: ${formatCents(del.financial.productValueCents)}, Taxa: ${formatCents(del.financial.deliveryFeeCents)})`;
+    msg += `.`;
+    if (del.financial.changeTakenCents > 0) msg += ` Troco: ${formatCents(del.financial.changeTakenCents)}.`;
+    const ph = del.customer && del.customer.phone;
+    if (ph) { const c = ph.replace(/\D/g,''); return `https://wa.me/${c.length<=11?'55'+c:c}?text=${encodeURIComponent(msg)}`; }
+    return `https://wa.me/?text=${encodeURIComponent(msg)}`;
+}
+
+/* ================================================================
+   3. DATABASE LAYER
+   ================================================================ */
+const DB = {
+    _db: null,
+    open() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open(APP_CONFIG.dbName, APP_CONFIG.dbVersion);
+            req.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                const oldV = e.oldVersion;
+                /* Entregas store — already exists from v1, don't recreate */
+                if (!db.objectStoreNames.contains('entregas')) {
+                    db.createObjectStore('entregas', { keyPath: 'id', autoIncrement: true });
+                }
+                /* Add indices to entregas (v1→v2 upgrade) */
+                if (oldV < 2) {
+                    const store = e.target.transaction.objectStore('entregas');
+                    if (!store.indexNames.contains('status'))    store.createIndex('status', 'logistics.status', { unique: false });
+                    if (!store.indexNames.contains('motoboyId')) store.createIndex('motoboyId', 'logistics.motoboyId', { unique: false });
+                    if (!store.indexNames.contains('createdAt')) store.createIndex('createdAt', 'createdAt', { unique: false });
+                }
+                /* New stores */
+                if (!db.objectStoreNames.contains('motoboys')) {
+                    db.createObjectStore('motoboys', { keyPath: 'id', autoIncrement: true });
+                }
+            };
+            req.onsuccess = (e) => { DB._db = e.target.result; resolve(DB._db); };
+            req.onerror = (e) => reject(new Error('IndexedDB: ' + (e.target.error||'erro desconhecido')));
+        });
+    },
+    _tx(stores, mode) { return DB._db.transaction(stores, mode); },
+    getAll(store) {
+        return new Promise((res, rej) => {
+            const r = DB._tx(store,'readonly').objectStore(store).getAll();
+            r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+        });
+    },
+    getById(store, id) {
+        return new Promise((res, rej) => {
+            const r = DB._tx(store,'readonly').objectStore(store).get(id);
+            r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+        });
+    },
+    add(store, data) {
+        return new Promise((res, rej) => {
+            const tx = DB._tx(store,'readwrite');
+            const r = tx.objectStore(store).add(data);
+            r.onsuccess = () => res(r.result);
+            tx.onerror = () => rej(tx.error);
+        });
+    },
+    put(store, data) {
+        return new Promise((res, rej) => {
+            const tx = DB._tx(store,'readwrite');
+            const r = tx.objectStore(store).put(data);
+            r.onsuccess = () => res(r.result);
+            tx.onerror = () => rej(tx.error);
+        });
+    },
+    del(store, id) {
+        return new Promise((res, rej) => {
+            const tx = DB._tx(store,'readwrite');
+            tx.objectStore(store).delete(id);
+            tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error);
+        });
+    },
+    clear(store) {
+        return new Promise((res, rej) => {
+            const tx = DB._tx(store,'readwrite');
+            tx.objectStore(store).clear();
+            tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error);
+        });
+    },
+    count(store) {
+        return new Promise((res, rej) => {
+            const r = DB._tx(store,'readonly').objectStore(store).count();
+            r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+        });
+    }
+};
+
+/* Repositories */
+const DeliveryRepo = {
+    getAll: () => DB.getAll('entregas'),
+    getById: (id) => DB.getById('entregas', id),
+    add: (d) => DB.add('entregas', d),
+    update: (d) => DB.put('entregas', d),
+    remove: (id) => DB.del('entregas', id),
+    clear: () => DB.clear('entregas'),
+};
+const MotoboyRepo = {
+    getAll: () => DB.getAll('motoboys'),
+    getById: (id) => DB.getById('motoboys', id),
+    add: (m) => DB.add('motoboys', m),
+    update: (m) => DB.put('motoboys', m),
+    remove: (id) => DB.del('motoboys', id),
+};
+
+/* ================================================================
+   4. DATA MIGRATION (v1 → v2)
+   Legacy status mapping:
+     pendente  → OUT_FOR_DELIVERY (already dispatched)
+     concluido → DELIVERED
+   All original data preserved in _legacyData.
+   Float values converted to integer cents.
+   ================================================================ */
+async function migrateData() {
+    const all = await DeliveryRepo.getAll();
+    let count = 0;
+    for (const rec of all) {
+        if (rec._migrated) continue;
+        /* If record already has logistics.status, skip (already new format) */
+        if (rec.logistics && rec.logistics.status && !rec._legacyData) continue;
+        if (rec._migrated === true) continue;
+
+        const legacy = {
+            orderNum: rec.orderNum, bairro: rec.bairro, deliveryValue: rec.deliveryValue,
+            productValue: rec.productValue, changeValue: rec.changeValue, timeOut: rec.timeOut,
+            timeIn: rec.timeIn, payMethod: rec.payMethod, checker: rec.checker,
+            status: rec.status, date: rec.date,
+        };
+
+        /* Parse date "DD/MM/YYYY" → ISO base */
+        let baseDate = null;
+        if (rec.date && typeof rec.date === 'string') {
+            const p = rec.date.split('/');
+            if (p.length === 3) baseDate = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+        }
+        let createdAt = null, departedAt = null, deliveredAt = null;
+        if (baseDate && rec.timeOut) { try { createdAt = new Date(`${baseDate}T${rec.timeOut}:00`).toISOString(); departedAt = createdAt; } catch(e){} }
+        if (baseDate && rec.timeIn) { try { deliveredAt = new Date(`${baseDate}T${rec.timeIn}:00`).toISOString(); } catch(e){} }
+
+        let newStatus;
+        if (rec.status === 'concluido') newStatus = STATUS.DELIVERED;
+        else if (rec.status === 'pendente') newStatus = STATUS.OUT_FOR_DELIVERY;
+        else if (Object.values(STATUS).includes(rec.status)) newStatus = rec.status;
+        else newStatus = STATUS.OUT_FOR_DELIVERY;
+
+        const nh = getNeighborhoodConfig(rec.bairro);
+        const migrated = {
+            id: rec.id,
+            orderNum: rec.orderNum || '',
+            customer: { name: '', phone: '' },
+            destination: {
+                bairro: rec.bairro || '', eixo: nh ? nh.axis : '',
+                endereco: '', numero: '', complemento: '', referencia: '',
+            },
+            financial: {
+                productValueCents: parseMoneyToCents(rec.productValue),
+                deliveryFeeCents: parseMoneyToCents(rec.deliveryValue),
+                changeTakenCents: parseMoneyToCents(rec.changeValue),
+                changeReturnedCents: 0,
+                paymentMethod: rec.payMethod || '',
+                totalCollectedCents: 0,
+            },
+            logistics: { motoboyId: null, motoboyName: '', status: newStatus },
+            timestamps: { createdAt, readyAt: null, assignedAt: null, departedAt, deliveredAt, settledAt: null },
+            checker: rec.checker || '',
+            notes: '',
+            occurrences: [],
+            _legacyData: legacy,
+            _migrated: true,
+            createdAt: createdAt || now(),
+            updatedAt: now(),
+        };
+        await DeliveryRepo.update(migrated);
+        count++;
+    }
+    return count;
+}
+
+/* ================================================================
+   5. SERVICES
+   ================================================================ */
+function createDeliveryObject(data) {
+    const nh = getNeighborhoodConfig(data.bairro);
+    const n = now();
+    const isCash = (data.paymentMethod || '') === 'Dinheiro';
+    return {
+        orderNum: (data.orderNum || '').trim(),
+        customer: { name: (data.clientName || '').trim(), phone: (data.clientPhone || '').trim() },
+        destination: {
+            bairro: data.bairro || '', eixo: nh ? nh.axis : '',
+            endereco: (data.endereco || '').trim(), numero: (data.numero || '').trim(),
+            complemento: (data.complemento || '').trim(), referencia: (data.referencia || '').trim(),
+        },
+        financial: {
+            productValueCents: parseMoneyToCents(data.productValue),
+            deliveryFeeCents: parseMoneyToCents(data.deliveryFee),
+            changeTakenCents: isCash ? parseMoneyToCents(data.changeTaken) : 0,
+            changeReturnedCents: 0,
+            paymentMethod: data.paymentMethod || '',
+            totalCollectedCents: 0,
+        },
+        logistics: { motoboyId: data.motoboyId || null, motoboyName: data.motoboyName || '', status: STATUS.PREPARO },
+        timestamps: { createdAt: n, readyAt: null, assignedAt: data.motoboyId ? n : null, departedAt: null, deliveredAt: null, settledAt: null },
+        checker: (data.checker || '').trim(),
+        notes: (data.notes || '').trim(),
+        occurrences: [],
+        _migrated: false,
+        createdAt: n,
+        updatedAt: n,
+    };
+}
+
+const DeliveryMutex = {
+    _locked: false,
+    _queue: [],
+    async lock() {
+        if (!this._locked) { this._locked = true; return; }
+        return new Promise(r => this._queue.push(r));
+    },
+    unlock() {
+        if (this._queue.length > 0) { const next = this._queue.shift(); next(); }
+        else { this._locked = false; }
+    }
+};
+
+const DeliveryService = {
+    async create(data) {
+        await DeliveryMutex.lock();
+        try {
+            const d = createDeliveryObject(data);
+            if (!d.orderNum) throw new Error('Nº do pedido é obrigatório');
+            if (!d.destination.bairro) throw new Error('Bairro é obrigatório');
+            if (!d.checker) throw new Error('Conferente é obrigatório');
+            const id = await DeliveryRepo.add(d);
+            d.id = id;
+            return d;
+        } finally { DeliveryMutex.unlock(); }
+    },
+    async update(id, changes) {
+        await DeliveryMutex.lock();
+        try {
+            const d = await DeliveryRepo.getById(id);
+            if (!d) throw new Error('Entrega não encontrada');
+            Object.assign(d, changes);
+            d.updatedAt = now();
+            await DeliveryRepo.update(d);
+            return d;
+        } finally { DeliveryMutex.unlock(); }
+    },
+    async transition(id, newStatus) {
+        await DeliveryMutex.lock();
+        try {
+            const d = await DeliveryRepo.getById(id);
+            if (!d) throw new Error('Entrega não encontrada');
+            const current = d.logistics.status;
+            const allowed = STATUS_TRANSITIONS[current] || [];
+            if (!allowed.includes(newStatus)) throw new Error(`Transição ${current} → ${newStatus} não permitida`);
+
+            d.logistics.status = newStatus;
+            const n = now();
+            if (newStatus === STATUS.READY) d.timestamps.readyAt = n;
+            if (newStatus === STATUS.OUT_FOR_DELIVERY) {
+                d.timestamps.departedAt = n;
+                if (!d.logistics.motoboyId) throw new Error('Motoboy deve ser atribuído antes da saída');
+            }
+            if (newStatus === STATUS.DELIVERED) d.timestamps.deliveredAt = n;
+            if (newStatus === STATUS.RETURN_PENDING) d.timestamps.returnedAt = n;
+            if (newStatus === STATUS.CANCELLED) d.timestamps.cancelledAt = n;
+            if (newStatus === STATUS.SETTLEMENT_PENDING) { /* auto after delivered */ }
+            if (newStatus === STATUS.SETTLED) d.timestamps.settledAt = n;
+            d.updatedAt = n;
+            await DeliveryRepo.update(d);
+            return d;
+        } finally { DeliveryMutex.unlock(); }
+    },
+    async assignMotoboy(id, motoboyId, motoboyName) {
+        await DeliveryMutex.lock();
+        try {
+            const d = await DeliveryRepo.getById(id);
+            if (!d) throw new Error('Entrega não encontrada');
+            d.logistics.motoboyId = motoboyId;
+            d.logistics.motoboyName = motoboyName;
+            if (!d.timestamps.assignedAt) d.timestamps.assignedAt = now();
+            d.updatedAt = now();
+            await DeliveryRepo.update(d);
+            return d;
+        } finally { DeliveryMutex.unlock(); }
+    },
+    async addOccurrence(id, type, obs, reason='') {
+        await DeliveryMutex.lock();
+        try {
+            const d = await DeliveryRepo.getById(id);
+            if (!d) throw new Error('Entrega não encontrada');
+            d.occurrences = d.occurrences || [];
+            if (typeof type === 'object') {
+                d.occurrences.push({ ...type, at: type.at || now() });
+            } else {
+                d.occurrences.push({ type, reason: reason || '', notes: obs || '', obs: obs || '', at: now() });
+            }
+            d.updatedAt = now();
+            await DeliveryRepo.update(d);
+            return d;
+        } finally { DeliveryMutex.unlock(); }
+    },
+    async remove(id) { 
+        await DeliveryMutex.lock();
+        try { await DeliveryRepo.remove(id); } finally { DeliveryMutex.unlock(); }
+    },
+};
+
+const SettlementService = {
+    calculate(deliveries) {
+        let totalFees = 0, cashProduct = 0, cashFees = 0, cashChange = 0;
+        let countCash = 0, countOther = 0;
+        deliveries.forEach(d => {
+            const f = d.financial;
+            totalFees += f.deliveryFeeCents;
+            if (f.paymentMethod === 'Dinheiro') {
+                countCash++;
+                cashProduct += f.productValueCents;
+                cashFees += f.deliveryFeeCents;
+                cashChange += f.changeTakenCents;
+            } else { countOther++; }
+        });
+        const cashInHand = cashProduct + cashFees + cashChange;
+        const motoboyReturns = cashProduct + cashChange;
+        const storeOwes = totalFees - cashFees;
+        const netBalance = motoboyReturns - storeOwes;
+        return { total: deliveries.length, countCash, countOther, totalFees, cashProduct, cashFees, cashChange, cashInHand, motoboyReturns, storeOwes, netBalance };
+    },
+    async settle(deliveryIds, notes) {
+        for (const id of deliveryIds) {
+            const d = await DeliveryRepo.getById(id);
+            if (!d) continue;
+            const st = d.logistics.status;
+            if (st === STATUS.DELIVERED) {
+                d.logistics.status = STATUS.SETTLEMENT_PENDING;
+                d.updatedAt = now();
+                await DeliveryRepo.update(d);
+            }
+            if (d.logistics.status === STATUS.SETTLEMENT_PENDING || d.logistics.status === STATUS.DELIVERED) {
+                d.logistics.status = STATUS.SETTLED;
+                d.timestamps.settledAt = now();
+                if (notes) d.notes = (d.notes ? d.notes + '\n' : '') + 'Acerto: ' + notes;
+                d.updatedAt = now();
+                await DeliveryRepo.update(d);
+            }
+        }
+    },
+};
+
+const BackupService = {
+    async exportData() {
+        const deliveries = await DeliveryRepo.getAll();
+        const motoboys = await MotoboyRepo.getAll();
+        return {
+            schemaVersion: APP_CONFIG.dbVersion,
+            appVersion: APP_CONFIG.version,
+            exportedAt: now(),
+            store: STORE_CONFIG,
+            data: { deliveries, motoboys },
+        };
+    },
+    validate(json) {
+        if (!json || typeof json !== 'object') return { valid: false, error: 'Arquivo inválido' };
+        if (!json.data) return { valid: false, error: 'Estrutura de dados ausente' };
+        if (!Array.isArray(json.data.deliveries)) return { valid: false, error: 'Lista de entregas ausente' };
+        return { valid: true, deliveries: json.data.deliveries.length, motoboys: (json.data.motoboys||[]).length };
+    },
+    async importData(json) {
+        const v = this.validate(json);
+        if (!v.valid) throw new Error(v.error);
+        let imported = 0;
+        for (const d of json.data.deliveries) {
+            const copy = Object.assign({}, d);
+            await DeliveryRepo.update(copy);
+            imported++;
+        }
+        if (json.data.motoboys) {
+            for (const m of json.data.motoboys) {
+                const copy = Object.assign({}, m);
+                await MotoboyRepo.update(copy);
+            }
+        }
+        return imported;
+    },
+};
+
+/* ================================================================
+   6. APPLICATION STATE
+   ================================================================ */
+const AppState = {
+    deliveries: [],
+    motoboys: [],
+    currentView: 'expedicao',
+    filters: { status: 'all', motoboyId: '', search: '' },
+    timerRef: null,
+};
+
+async function refreshData() {
+    AppState.deliveries = await DeliveryRepo.getAll();
+    AppState.motoboys = await MotoboyRepo.getAll();
+}
+
+/* ================================================================
+   7. UI COMPONENTS (Toast, Modal, Confirm)
+   ================================================================ */
+function showToast(msg, type='success') {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast ' + type;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('fade-out'); setTimeout(() => t.remove(), 300); }, APP_CONFIG.toastDurationMs);
+}
+
+function openModal(title, bodyHtml, footerHtml) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = bodyHtml;
+    document.getElementById('modalFooter').innerHTML = footerHtml || '';
+    const o = document.getElementById('modalOverlay');
+    o.classList.add('visible');
+    /* Focus first input */
+    setTimeout(() => { const i = o.querySelector('input,select,textarea'); if (i) i.focus(); }, 100);
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('visible'); }
+
+function showConfirm(title, message, onConfirm, btnText='Confirmar') {
+    openModal(title,
+        `<p style="font-size:14px;color:var(--text-sec);line-height:1.6">${escapeHtml(message)}</p>`,
+        `<button class="btn-outline" onclick="closeModal()">Cancelar</button>
+         <button class="btn-danger" id="confirmBtn">${escapeHtml(btnText)}</button>`
+    );
+    document.getElementById('confirmBtn').addEventListener('click', async () => {
+        document.getElementById('confirmBtn').disabled = true;
+        document.getElementById('confirmBtn').textContent = 'Processando...';
+        try { await onConfirm(); } catch(e) { showToast(e.message, 'error'); }
+        closeModal();
+    }, { once: true });
+}
+
+/* ================================================================
+   8. FORM — NEW / EDIT DELIVERY
+   ================================================================ */
+function buildNeighborhoodOptions(selected) {
+    return NEIGHBORHOODS.map(n =>
+        `<option value="${escapeHtml(n.name)}" ${n.name===selected?'selected':''}>${escapeHtml(n.name)}</option>`
+    ).join('');
+}
+function buildPaymentOptions(selected) {
+    return PAYMENT_METHODS.map(p =>
+        `<option ${p===selected?'selected':''}>${escapeHtml(p)}</option>`
+    ).join('');
+}
+function buildMotoboyOptions(selected, includeEmpty=true) {
+    const active = AppState.motoboys.filter(m => m.active !== false);
+    let html = includeEmpty ? '<option value="">— Nenhum —</option>' : '';
+    active.forEach(m => { html += `<option value="${m.id}" ${m.id==selected?'selected':''}>${escapeHtml(m.nome)}</option>`; });
+    return html;
+}
+
+function openDeliveryForm(editId) {
+    const isEdit = !!editId;
+    let d = null;
+    if (isEdit) d = AppState.deliveries.find(x => x.id === editId);
+    const fin = d ? d.financial : {};
+    const dest = d ? d.destination : {};
+    const cust = d ? d.customer : {};
+
+    const body = `
+        <div id="formInfoBar" class="form-info-bar" style="display:none"></div>
+        <form id="deliveryForm" autocomplete="off">
+            <div class="form-grid form-grid-2">
+                <div class="form-group"><label class="form-label" for="fOrderNum">Nº Pedido *</label>
+                    <input class="form-input" id="fOrderNum" required value="${escapeHtml(d?d.orderNum:'')}" placeholder="Ex: 1234"></div>
+                <div class="form-group"><label class="form-label" for="fBairro">Bairro *</label>
+                    <select class="form-select" id="fBairro" required><option value="">Selecione...</option>${buildNeighborhoodOptions(dest.bairro||'')}</select></div>
+            </div>
+            <div class="form-grid form-grid-3">
+                <div class="form-group"><label class="form-label" for="fFee">Taxa Entrega (R$)</label>
+                    <input class="form-input" id="fFee" type="text" inputmode="decimal" value="${d?(fin.deliveryFeeCents/100).toFixed(2):'0.00'}"></div>
+                <div class="form-group"><label class="form-label" for="fProduct">Vlr Mercadoria (R$) *</label>
+                    <input class="form-input" id="fProduct" type="text" inputmode="decimal" required value="${d?(fin.productValueCents/100).toFixed(2):'0.00'}"></div>
+                <div class="form-group"><label class="form-label" for="fPayment">Pagamento</label>
+                    <select class="form-select" id="fPayment">${buildPaymentOptions(fin.paymentMethod||'Dinheiro')}</select></div>
+            </div>
+            <div class="form-grid form-grid-3">
+                <div class="form-group" id="fChangeGroup"><label class="form-label" for="fChange">Troco Levado (R$)</label>
+                    <input class="form-input" id="fChange" type="text" inputmode="decimal" value="${d?(fin.changeTakenCents/100).toFixed(2):'0.00'}"></div>
+                <div class="form-group"><label class="form-label" for="fChecker">Conferente *</label>
+                    <input class="form-input" id="fChecker" required value="${escapeHtml(d?d.checker:'')}" style="text-transform:uppercase"></div>
+                <div class="form-group"><label class="form-label" for="fMotoboy">Motoboy</label>
+                    <select class="form-select" id="fMotoboy">${buildMotoboyOptions(d?d.logistics.motoboyId:null)}</select></div>
+            </div>
+            <div class="form-toggle-details" id="toggleDetails">▼ Mais detalhes</div>
+            <div class="form-details" id="formDetails">
+                <div class="form-grid form-grid-2">
+                    <div class="form-group"><label class="form-label" for="fClientName">Cliente</label>
+                        <input class="form-input" id="fClientName" value="${escapeHtml(cust.name||'')}"></div>
+                    <div class="form-group"><label class="form-label" for="fClientPhone">Telefone</label>
+                        <input class="form-input" id="fClientPhone" type="tel" value="${escapeHtml(cust.phone||'')}" placeholder="(22) 99999-0000"></div>
+                </div>
+                <div class="form-grid form-grid-2">
+                    <div class="form-group"><label class="form-label" for="fEndereco">Endereço</label>
+                        <input class="form-input" id="fEndereco" value="${escapeHtml(dest.endereco||'')}"></div>
+                    <div class="form-group"><label class="form-label" for="fNumero">Número</label>
+                        <input class="form-input" id="fNumero" value="${escapeHtml(dest.numero||'')}"></div>
+                </div>
+                <div class="form-grid form-grid-2">
+                    <div class="form-group"><label class="form-label" for="fComplemento">Complemento</label>
+                        <input class="form-input" id="fComplemento" value="${escapeHtml(dest.complemento||'')}"></div>
+                    <div class="form-group"><label class="form-label" for="fReferencia">Referência</label>
+                        <input class="form-input" id="fReferencia" value="${escapeHtml(dest.referencia||'')}"></div>
+                </div>
+                <div class="form-group"><label class="form-label" for="fNotes">Observação</label>
+                    <textarea class="form-input" id="fNotes" rows="2">${escapeHtml(d?d.notes:'')}</textarea></div>
+            </div>
+        </form>`;
+
+    const footer = `<button class="btn-outline" onclick="closeModal()">Cancelar</button>
+        <button class="btn-success" id="btnSaveDelivery">${isEdit?'Salvar Alterações':'Registrar Entrega'}</button>`;
+
+    openModal(isEdit ? 'Editar Entrega #'+escapeHtml(d.orderNum) : 'Nova Entrega', body, footer);
+
+    /* Bairro change → auto fee + info */
+    const fBairro = document.getElementById('fBairro');
+    const fFee = document.getElementById('fFee');
+    const infoBar = document.getElementById('formInfoBar');
+    function updateBairroInfo() {
+        const nh = getNeighborhoodConfig(fBairro.value);
+        if (nh) {
+            if (!isEdit) fFee.value = (nh.feeCents / 100).toFixed(2);
+            infoBar.style.display = 'flex';
+            infoBar.innerHTML = `<span>Eixo ${escapeHtml(nh.axis)}</span><span>Taxa: R$ ${(nh.feeCents/100).toFixed(2)}</span>${nh.district?'<span>📍 Distrito</span>':''}`;
+        } else { infoBar.style.display = 'none'; }
+    }
+    fBairro.addEventListener('change', updateBairroInfo);
+    if (fBairro.value) updateBairroInfo();
+
+    /* Payment change → highlight/disable troco */
+    const fPayment = document.getElementById('fPayment');
+    const fChangeGroup = document.getElementById('fChangeGroup');
+    const fChange = document.getElementById('fChange');
+    function updatePayHighlight() {
+        if (fPayment.value === 'Dinheiro') {
+            fChange.disabled = false;
+            fChange.classList.add('form-highlight');
+        } else {
+            fChange.value = '0.00';
+            fChange.disabled = true;
+            fChange.classList.remove('form-highlight');
+        }
+    }
+    fPayment.addEventListener('change', updatePayHighlight);
+    updatePayHighlight();
+
+    /* Toggle details */
+    document.getElementById('toggleDetails').addEventListener('click', function() {
+        const det = document.getElementById('formDetails');
+        det.classList.toggle('show');
+        this.textContent = det.classList.contains('show') ? '▲ Menos detalhes' : '▼ Mais detalhes';
+    });
+
+    /* Save */
+    document.getElementById('btnSaveDelivery').addEventListener('click', async function() {
+        const form = document.getElementById('deliveryForm');
+        if (!form.reportValidity()) return;
+        this.disabled = true; this.textContent = 'Salvando...';
+        try {
+            const motoboyId = document.getElementById('fMotoboy').value;
+            let motoboyName = '';
+            if (motoboyId) { const m = AppState.motoboys.find(x => x.id == motoboyId); if (m) motoboyName = m.nome; }
+
+            const data = {
+                orderNum: document.getElementById('fOrderNum').value,
+                bairro: document.getElementById('fBairro').value,
+                deliveryFee: document.getElementById('fFee').value,
+                productValue: document.getElementById('fProduct').value,
+                changeTaken: document.getElementById('fChange').value,
+                paymentMethod: document.getElementById('fPayment').value,
+                checker: document.getElementById('fChecker').value,
+                motoboyId: motoboyId ? parseInt(motoboyId) : null,
+                motoboyName,
+                clientName: document.getElementById('fClientName').value,
+                clientPhone: document.getElementById('fClientPhone').value,
+                endereco: document.getElementById('fEndereco').value,
+                numero: document.getElementById('fNumero').value,
+                complemento: document.getElementById('fComplemento').value,
+                referencia: document.getElementById('fReferencia').value,
+                notes: document.getElementById('fNotes').value,
+            };
+
+            const isCash = data.paymentMethod === 'Dinheiro';
+            if (isEdit) {
+                const nh = getNeighborhoodConfig(data.bairro);
+                await DeliveryService.update(editId, {
+                    orderNum: data.orderNum.trim(),
+                    customer: { name: data.clientName.trim(), phone: data.clientPhone.trim() },
+                    destination: { bairro: data.bairro, eixo: nh?nh.axis:'', endereco: data.endereco.trim(), numero: data.numero.trim(), complemento: data.complemento.trim(), referencia: data.referencia.trim() },
+                    financial: {
+                        productValueCents: parseMoneyToCents(data.productValue),
+                        deliveryFeeCents: parseMoneyToCents(data.deliveryFee),
+                        changeTakenCents: isCash ? parseMoneyToCents(data.changeTaken) : 0,
+                        changeReturnedCents: d.financial.changeReturnedCents,
+                        paymentMethod: data.paymentMethod,
+                        totalCollectedCents: d.financial.totalCollectedCents,
+                    },
+                    logistics: { ...d.logistics, motoboyId: data.motoboyId, motoboyName: data.motoboyName },
+                    checker: data.checker.trim(),
+                    notes: data.notes.trim(),
+                });
+                showToast('Entrega atualizada');
+            } else {
+                await DeliveryService.create(data);
+                showToast('Entrega registrada');
+                try { localStorage.removeItem(APP_CONFIG.formDraftKey); } catch(e){}
+            }
+            closeModal();
+            await refreshAndRender();
+        } catch(e) { showToast(e.message, 'error'); this.disabled = false; this.textContent = isEdit?'Salvar Alterações':'Registrar Entrega'; }
+    });
+}
+
+/* ================================================================
+   9. MOTOBOY MANAGEMENT
+   ================================================================ */
+function openMotoboyManager() {
+    renderMotoboyManagerBody();
+}
+function renderMotoboyManagerBody() {
+    const active = AppState.motoboys.filter(m => m.active !== false);
+    const inactive = AppState.motoboys.filter(m => m.active === false);
+    let list = '';
+    active.forEach(m => {
+        list += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+            <div><strong>${escapeHtml(m.nome)}</strong> ${m.telefone?'<span style="color:var(--text-muted);font-size:11px">'+escapeHtml(m.telefone)+'</span>':''}</div>
+            <div style="display:flex;gap:4px">
+                <button class="btn-outline btn-sm motoboy-deactivate" data-mid="${m.id}">Desativar</button>
+                <button class="btn-outline btn-sm motoboy-remove" data-mid="${m.id}" style="color:var(--danger)">✕</button>
+            </div></div>`;
+    });
+    inactive.forEach(m => {
+        list += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);opacity:.5">
+            <div><s>${escapeHtml(m.nome)}</s> <span style="font-size:10px;color:var(--text-muted)">inativo</span></div>
+            <button class="btn-outline btn-sm motoboy-activate" data-mid="${m.id}">Ativar</button></div>`;
+    });
+    if (!list) list = '<p style="color:var(--text-muted);padding:20px 0;text-align:center">Nenhum motoboy cadastrado</p>';
+
+    openModal('Gerenciar Motoboys',
+        `<div style="margin-bottom:16px">
+            <div class="form-grid form-grid-2" style="gap:8px">
+                <input class="form-input" id="newMotoboyName" placeholder="Nome do motoboy">
+                <input class="form-input" id="newMotoboyPhone" placeholder="Telefone (opcional)">
+            </div>
+            <button class="btn-primary btn-sm" id="btnAddMotoboy" style="margin-top:8px;width:100%">+ Adicionar Motoboy</button>
+        </div>
+        <div id="motoboyList">${list}</div>`, '');
+
+    document.getElementById('btnAddMotoboy').addEventListener('click', async () => {
+        const name = document.getElementById('newMotoboyName').value.trim();
+        if (!name) { showToast('Nome obrigatório', 'warning'); return; }
+        await MotoboyRepo.add({ nome: name, telefone: document.getElementById('newMotoboyPhone').value.trim(), active: true });
+        await refreshData();
+        showToast('Motoboy adicionado');
+        renderMotoboyManagerBody();
+        updateMotoboySelects();
+    });
+
+    /* Delegation for motoboy list actions */
+    document.getElementById('modalBody').addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-mid]');
+        if (!btn) return;
+        const mid = parseInt(btn.dataset.mid);
+        if (btn.classList.contains('motoboy-deactivate')) {
+            const m = await MotoboyRepo.getById(mid);
+            if (m) { m.active = false; await MotoboyRepo.update(m); await refreshData(); renderMotoboyManagerBody(); updateMotoboySelects(); }
+        } else if (btn.classList.contains('motoboy-activate')) {
+            const m = await MotoboyRepo.getById(mid);
+            if (m) { m.active = true; await MotoboyRepo.update(m); await refreshData(); renderMotoboyManagerBody(); updateMotoboySelects(); }
+        } else if (btn.classList.contains('motoboy-remove')) {
+            showConfirm('Remover Motoboy', 'Deseja remover este motoboy permanentemente?', async () => {
+                await MotoboyRepo.remove(mid); await refreshData(); renderMotoboyManagerBody(); updateMotoboySelects();
+                showToast('Motoboy removido');
+            }, 'Remover');
+        }
+    });
+}
+
+function updateMotoboySelects() {
+    const opts = buildMotoboyOptions(null, true);
+    ['filterMotoboyExp','motoboyViewSelect','acertoMotoboyFilter'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { const val = el.value; el.innerHTML = '<option value="">'+el.options[0].textContent+'</option>' + opts.replace('<option value="">— Nenhum —</option>',''); el.value = val; }
+    });
+}
+
+/* ================================================================
+   10. RENDERERS
+   ================================================================ */
+
+/* -- Dashboard -- */
+function renderDashboard() {
+    const ds = AppState.deliveries;
+    const today = todayISO();
+    const todayDs = ds.filter(d => isoToDateStr(d.createdAt) === today || isoToDateStr(d.timestamps && d.timestamps.createdAt) === today);
+
+    let prep = 0, ready = 0, inRoute = 0, returnsCount = 0, delivered = 0, pendAcerto = 0, feesDay = 0, changeOnRoad = 0, delayed = 0;
+    ds.forEach(d => {
+        const st = d.logistics ? d.logistics.status : (d.status || '');
+        if (st === STATUS.PREPARO) prep++;
+        if (st === STATUS.READY) ready++;
+        if (st === STATUS.OUT_FOR_DELIVERY) {
+            inRoute++;
+            if (d.financial?.paymentMethod === 'Dinheiro') {
+                changeOnRoad += (d.financial ? d.financial.changeTakenCents : 0);
+            }
+            const t = d.timestamps ? d.timestamps.departedAt : null;
+            if (t) {
+                const min = getElapsedMin(t);
+                const dist = d.destination ? isDistrictNeighborhood(d.destination.bairro) : false;
+                if (getDelayLevel(min, dist) === 'red') delayed++;
+            }
+        }
+        if (st === STATUS.RETURN_PENDING) returnsCount++;
+        if (st === STATUS.DELIVERED || st === STATUS.SETTLEMENT_PENDING) pendAcerto++;
+    });
+    todayDs.forEach(d => {
+        const st = d.logistics ? d.logistics.status : '';
+        if ([STATUS.DELIVERED, STATUS.SETTLEMENT_PENDING, STATUS.SETTLED].includes(st)) {
+            delivered++;
+            feesDay += (d.financial ? d.financial.deliveryFeeCents : 0);
+        }
+    });
+
+    const cards = [
+        { label: 'Em Preparo', value: prep, cls: 'blue', vcls: '' },
+        { label: 'Prontos', value: ready, cls: 'purple', vcls: '' },
+        { label: 'Em Rota', value: inRoute, cls: 'yellow', vcls: '' },
+        { label: 'Retornos', value: returnsCount, cls: 'red', vcls: returnsCount > 0 ? 'red-text' : '' },
+        { label: 'Entregues Hoje', value: delivered, cls: 'green', vcls: 'green-text' },
+        { label: 'Pend. Acerto', value: pendAcerto, cls: 'yellow', vcls: 'yellow-text' },
+        { label: 'Taxas do Dia', value: formatCents(feesDay), cls: 'green', vcls: 'green-text' },
+        { label: 'Troco na Rua', value: formatCents(changeOnRoad), cls: 'yellow', vcls: 'yellow-text' },
+        { label: 'Atrasados', value: delayed, cls: 'red', vcls: delayed > 0 ? 'red-text' : '' },
+    ];
+
+    document.getElementById('dashboard').innerHTML = cards.map(c =>
+        `<div class="dash-card ${c.cls}"><div class="dash-label">${c.label}</div><div class="dash-value ${c.vcls}">${c.value}</div></div>`
+    ).join('');
+}
+
+/* -- Kanban -- */
+function getFilteredDeliveries() {
+    let list = AppState.deliveries.slice();
+    const f = AppState.filters;
+    const today = todayISO();
+
+    if (!f.search) {
+        list = list.filter(d => {
+            const st = d.logistics?.status;
+            const isCompleted = [STATUS.DELIVERED, STATUS.RETURN_PENDING, STATUS.SETTLEMENT_PENDING, STATUS.SETTLED, STATUS.CANCELLED].includes(st);
+            if (isCompleted && isoToDateStr(d.createdAt) !== today) return false;
+            return true;
+        });
+    }
+
+    if (f.search) {
+        const s = f.search.toLowerCase();
+        list = list.filter(d => {
+            const orderMatch = (d.orderNum||'').toLowerCase().includes(s);
+            const bairroMatch = (d.destination?.bairro||'').toLowerCase().includes(s);
+            const motoboyMatch = (d.logistics?.motoboyName||'').toLowerCase().includes(s);
+            const clientMatch = (d.customer?.name||'').toLowerCase().includes(s);
+            const phoneMatch = (d.customer?.phone||'').includes(s);
+            const endMatch = (d.destination?.endereco||'').toLowerCase().includes(s);
+            return orderMatch||bairroMatch||motoboyMatch||clientMatch||phoneMatch||endMatch;
+        });
+    }
+    if (f.motoboyId) {
+        list = list.filter(d => d.logistics && d.logistics.motoboyId == f.motoboyId);
+    }
+    if (f.status && f.status !== 'all') {
+        if (f.status === 'DELAYED') {
+            list = list.filter(d => {
+                if (d.logistics?.status !== STATUS.OUT_FOR_DELIVERY) return false;
+                const t = d.timestamps?.departedAt;
+                if (!t) return false;
+                return getDelayLevel(getElapsedMin(t), isDistrictNeighborhood(d.destination?.bairro)) === 'red';
+            });
+        } else {
+            list = list.filter(d => d.logistics?.status === f.status);
+        }
+    }
+    return list;
+}
+
+function sortDeliveries(list) {
+    const priority = { [STATUS.OUT_FOR_DELIVERY]: 0, [STATUS.READY]: 1, [STATUS.PREPARO]: 2, [STATUS.DELIVERED]: 3, [STATUS.RETURN_PENDING]: 4, [STATUS.SETTLEMENT_PENDING]: 5, [STATUS.SETTLED]: 6, [STATUS.CANCELLED]: 7 };
+    return list.sort((a, b) => {
+        const sa = a.logistics?.status || '', sb = b.logistics?.status || '';
+        /* Delayed items first within OUT_FOR_DELIVERY */
+        if (sa === STATUS.OUT_FOR_DELIVERY && sb === STATUS.OUT_FOR_DELIVERY) {
+            const mA = getElapsedMin(a.timestamps?.departedAt);
+            const mB = getElapsedMin(b.timestamps?.departedAt);
+            return mB - mA; /* longer first */
+        }
+        const pa = priority[sa] ?? 99, pb = priority[sb] ?? 99;
+        if (pa !== pb) return pa - pb;
+        /* Same status: oldest first */
+        return new Date(a.createdAt||0) - new Date(b.createdAt||0);
+    });
+}
+
+function renderKanbanCard(d) {
+    const st = d.logistics?.status || '';
+    const bairro = escapeHtml(d.destination?.bairro || '');
+    const eixo = escapeHtml(d.destination?.eixo || '');
+    const mName = d.logistics?.motoboyName ? escapeHtml(d.logistics.motoboyName) : '';
+    const pay = escapeHtml(d.financial?.paymentMethod || '');
+    const hasFin = d.financial;
+    const product = hasFin ? formatCents(d.financial.productValueCents) : '';
+    const change = hasFin && d.financial.changeTakenCents > 0 ? 'Troco ' + formatCents(d.financial.changeTakenCents) : '';
+    const fee = hasFin ? 'Taxa ' + formatCents(d.financial.deliveryFeeCents) : '';
+    const hasOcc = d.occurrences && d.occurrences.length > 0;
+
+    /* Time badge */
+    let timeBadge = '';
+    if (st === STATUS.OUT_FOR_DELIVERY && d.timestamps?.departedAt) {
+        const min = getElapsedMin(d.timestamps.departedAt);
+        const dist = isDistrictNeighborhood(d.destination?.bairro);
+        const lvl = getDelayLevel(min, dist);
+        timeBadge = `<span class="k-card-time delay-${lvl}">${min} min</span>`;
+    } else if (st === STATUS.RETURN_PENDING) {
+        const refTime = d.timestamps?.returnedAt || d.updatedAt || d.timestamps?.departedAt;
+        const min = getElapsedMin(refTime);
+        timeBadge = `<span class="k-card-time delay-red" title="Retornou há ${min} min">↩ ${min} min</span>`;
+    } else if (st === STATUS.PREPARO && d.timestamps?.createdAt) {
+        timeBadge = `<span class="k-card-time delay-green">${getElapsedMin(d.timestamps.createdAt)} min</span>`;
+    } else if (st === STATUS.READY && d.timestamps?.readyAt) {
+        const min = getElapsedMin(d.timestamps.readyAt);
+        timeBadge = `<span class="k-card-time delay-${min>15?'yellow':'green'}">${min} min</span>`;
+    }
+
+    /* Actions */
+    let actions = '';
+    if (st === STATUS.PREPARO) {
+        actions = `<button class="k-action-advance" data-action="advance" data-id="${d.id}" data-to="${STATUS.READY}">✓ Pronto</button>
+                   <button class="k-action-edit" data-action="edit" data-id="${d.id}">✎</button>
+                   <button class="k-action-cancel" data-action="cancel" data-id="${d.id}">✕</button>`;
+    } else if (st === STATUS.READY) {
+        if (!d.logistics?.motoboyId) actions += `<button class="k-action-motoboy" data-action="assign" data-id="${d.id}">🏍 Motoboy</button>`;
+        actions += `<button class="k-action-advance" data-action="advance" data-id="${d.id}" data-to="${STATUS.OUT_FOR_DELIVERY}">➤ Enviar</button>
+                    <button class="k-action-edit" data-action="edit" data-id="${d.id}">✎</button>
+                    <button class="k-action-back" data-action="advance" data-id="${d.id}" data-to="${STATUS.PREPARO}">↩</button>
+                    <button class="k-action-cancel" data-action="cancel" data-id="${d.id}">✕</button>`;
+    } else if (st === STATUS.OUT_FOR_DELIVERY) {
+        actions = `<button class="k-action-advance" data-action="advance" data-id="${d.id}" data-to="${STATUS.DELIVERED}">✓ Entregue</button>
+                   <button class="k-action-back" data-action="return" data-id="${d.id}">↩ Voltou</button>
+                   <button class="k-action-cancel" data-action="cancel" data-id="${d.id}">✕ Cancelar</button>
+                   <button class="k-action-occur" data-action="occur" data-id="${d.id}">⚠</button>`;
+    } else if (st === STATUS.RETURN_PENDING) {
+        actions = `<button class="k-action-advance" data-action="advance" data-id="${d.id}" data-to="${STATUS.READY}">✓ Pronto</button>
+                   <button class="k-action-back" data-action="advance" data-id="${d.id}" data-to="${STATUS.PREPARO}">↩ Preparo</button>
+                   <button class="k-action-cancel" data-action="cancel" data-id="${d.id}">✕ Cancelar</button>`;
+    }
+
+    const lastRet = (d.occurrences || []).slice().reverse().find(o => o.type === 'Retorno');
+    const returnReasonHtml = (st === STATUS.RETURN_PENDING && lastRet)
+        ? `<div style="font-size:11px;color:var(--danger);font-weight:700;margin:4px 0;background:var(--danger-light);padding:3px 6px;border-radius:4px">Motivo: ${escapeHtml(lastRet.reason || lastRet.obs || 'Não informado')}</div>`
+        : '';
+
+    return `<div class="k-card" draggable="true" data-id="${d.id}" data-status="${st}">
+        <div class="k-card-header">
+            <span class="k-card-order">#${escapeHtml(d.orderNum||'')}</span>
+            ${timeBadge}
+        </div>
+        <div class="k-card-dest">${bairro}</div>
+        ${eixo ? `<span class="k-card-axis">${eixo}</span>` : ''}
+        ${returnReasonHtml}
+        <div class="k-card-motoboy ${mName?'':'unassigned'}">${mName || (st !== STATUS.PREPARO ? 'Sem motoboy' : '')}</div>
+        <div class="k-card-financial">
+            <span class="k-card-badge badge-value">${product}</span>
+            <span class="k-card-badge badge-pay">${pay}</span>
+            ${change ? `<span class="k-card-badge badge-change">${change}</span>` : ''}
+            <span class="k-card-badge badge-fee">${fee}</span>
+        </div>
+        ${hasOcc ? '<span class="occurrence-badge">⚠ Ocorrência</span>' : ''}
+        <div class="k-card-actions">${actions}</div>
+    </div>`;
+}
+
+function renderKanban() {
+    const cols = { PREPARO: [], READY: [], OUT_FOR_DELIVERY: [], RETURN_PENDING: [], DELIVERED: [] };
+    const filtered = getFilteredDeliveries();
+    const sorted = sortDeliveries(filtered);
+
+    sorted.forEach(d => {
+        const st = d.logistics?.status || '';
+        if (st === STATUS.PREPARO) cols.PREPARO.push(d);
+        else if (st === STATUS.READY) cols.READY.push(d);
+        else if (st === STATUS.OUT_FOR_DELIVERY) cols.OUT_FOR_DELIVERY.push(d);
+        else if (st === STATUS.RETURN_PENDING) cols.RETURN_PENDING.push(d);
+        else if (st === STATUS.DELIVERED || st === STATUS.SETTLEMENT_PENDING) cols.DELIVERED.push(d);
+        /* SETTLED and CANCELLED not shown in Kanban */
+    });
+
+    ['PREPARO','READY','OUT_FOR_DELIVERY','RETURN_PENDING','DELIVERED'].forEach(col => {
+        const container = document.querySelector(`.kanban-cards[data-col="${col}"]`);
+        if (container) container.innerHTML = cols[col].map(renderKanbanCard).join('');
+    });
+
+    document.getElementById('countPreparo').textContent = cols.PREPARO.length;
+    document.getElementById('countReady').textContent = cols.READY.length;
+    document.getElementById('countOut').textContent = cols.OUT_FOR_DELIVERY.length;
+    const cRet = document.getElementById('countReturns');
+    if (cRet) cRet.textContent = cols.RETURN_PENDING.length;
+    document.getElementById('countDelivered').textContent = cols.DELIVERED.length;
+}
+
+/* -- Motoboy View -- */
+function renderMotoboyView() {
+    const container = document.getElementById('motoboyDeliveries');
+    const selId = document.getElementById('motoboyViewSelect').value;
+    if (!selId) {
+        container.innerHTML = '<div class="motoboy-empty"><p style="font-size:40px">🏍</p><p>Selecione seu nome para ver suas entregas</p></div>';
+        return;
+    }
+    const mid = parseInt(selId);
+    const myDeliveries = AppState.deliveries.filter(d =>
+        d.logistics?.motoboyId === mid &&
+        [STATUS.READY, STATUS.OUT_FOR_DELIVERY].includes(d.logistics?.status)
+    );
+    sortDeliveries(myDeliveries);
+
+    if (!myDeliveries.length) {
+        container.innerHTML = '<div class="motoboy-empty"><p style="font-size:40px">✅</p><p>Nenhuma entrega pendente</p></div>';
+        return;
+    }
+
+    container.innerHTML = myDeliveries.map(d => {
+        const st = d.logistics?.status;
+        const isOut = st === STATUS.OUT_FOR_DELIVERY;
+        const dest = d.destination || {};
+        const fin = d.financial || {};
+        const enderecoLine = dest.endereco ? `${escapeHtml(dest.endereco)}${dest.numero ? ', '+escapeHtml(dest.numero) : ''}${dest.complemento ? ' - '+escapeHtml(dest.complemento) : ''}` : '';
+        const refLine = dest.referencia ? `Ref: ${escapeHtml(dest.referencia)}` : '';
+
+        let timeBadge = '';
+        if (isOut && d.timestamps?.departedAt) {
+            const min = getElapsedMin(d.timestamps.departedAt);
+            const lvl = getDelayLevel(min, isDistrictNeighborhood(dest.bairro));
+            timeBadge = `<span class="m-card-timer delay-${lvl}">${min} min em rota</span>`;
+        }
+
+        const statusLabel = isOut ? 'EM ROTA' : 'PRONTO';
+        const statusCls = isOut ? 'status-out' : 'status-ready';
+
+        return `<div class="m-card" data-id="${d.id}">
+            <div class="m-card-header">
+                <span class="m-card-order">#${escapeHtml(d.orderNum||'')}</span>
+                <span class="m-card-status ${statusCls}">${statusLabel}</span>
+            </div>
+            <div class="m-card-dest">
+                <div class="bairro">${escapeHtml(dest.bairro||'')}</div>
+                <div class="eixo">Eixo ${escapeHtml(dest.eixo||'')}</div>
+                ${enderecoLine ? `<div class="endereco">${enderecoLine}</div>` : ''}
+                ${refLine ? `<div class="endereco">${refLine}</div>` : ''}
+            </div>
+            <div class="m-card-finance">
+                <span class="fin-item fin-valor">${formatCents(fin.productValueCents)}</span>
+                <span class="fin-item fin-pay">${escapeHtml(fin.paymentMethod||'')}</span>
+                ${fin.changeTakenCents > 0 ? `<span class="fin-item fin-change">Troco ${formatCents(fin.changeTakenCents)}</span>` : ''}
+                <span class="fin-item fin-fee">Taxa ${formatCents(fin.deliveryFeeCents)}</span>
+            </div>
+            ${timeBadge}
+            <div class="m-card-nav">
+                <a href="${buildWazeUrl(d)}" target="_blank" class="nav-waze" rel="noopener">WAZE</a>
+                <a href="${buildMapsUrl(d)}" target="_blank" class="nav-maps" rel="noopener">MAPS</a>
+                <a href="${buildWhatsAppUrl(d)}" target="_blank" class="nav-whatsapp" rel="noopener">ZAP</a>
+            </div>
+            ${!isOut ?
+                `<button class="m-card-main-action action-depart" data-action="depart" data-id="${d.id}">➤ SAIR PARA ENTREGA</button>` :
+                `<button class="m-card-main-action action-complete" data-action="complete" data-id="${d.id}">✓ CONCLUIR ENTREGA</button>`
+            }
+            <button class="m-card-secondary" data-action="occur" data-id="${d.id}">⚠ Registrar Ocorrência</button>
+        </div>`;
+    }).join('');
+}
+
+/* -- Acerto View -- */
+function renderAcerto() {
+    const container = document.getElementById('acertoContent');
+    const dateFilter = document.getElementById('acertoDate').value || todayISO();
+    const motoboyFilter = document.getElementById('acertoMotoboyFilter').value;
+
+    /* Filter deliveries for the selected date */
+    let dels = AppState.deliveries.filter(d => {
+        const created = isoToDateStr(d.createdAt);
+        const delivered = isoToDateStr(d.timestamps?.deliveredAt);
+        return created === dateFilter || delivered === dateFilter;
+    });
+    /* Only completed deliveries */
+    dels = dels.filter(d => [STATUS.DELIVERED, STATUS.SETTLEMENT_PENDING, STATUS.SETTLED].includes(d.logistics?.status));
+
+    if (motoboyFilter) dels = dels.filter(d => d.logistics?.motoboyId == motoboyFilter);
+
+    /* Group by motoboy */
+    const groups = {};
+    dels.forEach(d => {
+        const key = d.logistics?.motoboyId || 0;
+        const name = d.logistics?.motoboyName || 'Sem Motoboy';
+        if (!groups[key]) groups[key] = { name, deliveries: [], id: key };
+        groups[key].deliveries.push(d);
+    });
+
+    if (!Object.keys(groups).length) {
+        container.innerHTML = '<div class="motoboy-empty"><p style="font-size:40px">📋</p><p>Nenhuma entrega concluída para esta data</p></div>';
+        return;
+    }
+
+    let html = '';
+    Object.values(groups).forEach(g => {
+        const calc = SettlementService.calculate(g.deliveries);
+        const allSettled = g.deliveries.every(d => d.logistics?.status === STATUS.SETTLED);
+        const canSettle = g.deliveries.some(d => [STATUS.DELIVERED, STATUS.SETTLEMENT_PENDING].includes(d.logistics?.status));
+
+        let balanceLabel = '';
+        let balanceColor = 'var(--text-sec)';
+        if (calc.netBalance === 0) {
+            balanceLabel = 'ACERTO ZERADO';
+            balanceColor = 'var(--text-sec)';
+        } else if (calc.netBalance > 0) {
+            balanceLabel = 'MOTOBOY DEVOLVE: ' + formatCents(calc.netBalance);
+            balanceColor = 'var(--warning)';
+        } else {
+            balanceLabel = 'LOJA PAGA: ' + formatCents(Math.abs(calc.netBalance));
+            balanceColor = 'var(--success)';
+        }
+
+        html += `<div class="acerto-summary">
+            <h3>🏍 ${escapeHtml(g.name)} ${allSettled ? '<span style="color:var(--success);font-size:12px">✓ ACERTADO</span>' : ''}</h3>
+            <div class="acerto-grid">
+                <div class="acerto-item"><div class="label">Entregas</div><div class="value">${calc.total}</div></div>
+                <div class="acerto-item"><div class="label">Em Dinheiro</div><div class="value">${calc.countCash}</div></div>
+                <div class="acerto-item"><div class="label">Pix/Cartão/App</div><div class="value">${calc.countOther}</div></div>
+                <div class="acerto-item"><div class="label">Troco Levado</div><div class="value warning">${formatCents(calc.cashChange)}</div></div>
+                <div class="acerto-item"><div class="label">Dinheiro em Mãos</div><div class="value">${formatCents(calc.cashInHand)}</div></div>
+                <div class="acerto-item"><div class="label">Taxas Totais</div><div class="value success">${formatCents(calc.totalFees)}</div></div>
+                <div class="acerto-item"><div class="label">Motoboy Deve Devolver (Soma)</div><div class="value">${formatCents(calc.motoboyReturns)}</div></div>
+                <div class="acerto-item"><div class="label">Loja Deve (Taxas Pix/Cartão)</div><div class="value success">${formatCents(calc.storeOwes)}</div></div>
+                <div class="acerto-item" style="grid-column: span 2; background: var(--surface-hover);"><div class="label">Saldo Líquido Acerto</div><div class="value" style="font-weight:800; font-size:18px; color:${balanceColor}">${balanceLabel}</div></div>
+            </div>
+            <table class="settlement-table">
+                <thead><tr><th>Pedido</th><th>Bairro</th><th>Valor</th><th>Taxa</th><th>Pagamento</th><th>Troco</th><th>Status</th><th>Hora</th></tr></thead>
+                <tbody>${g.deliveries.map(d => `<tr>
+                    <td><strong>#${escapeHtml(d.orderNum||'')}</strong></td>
+                    <td>${escapeHtml(d.destination?.bairro||'')}</td>
+                    <td>${formatCents(d.financial?.productValueCents)}</td>
+                    <td>${formatCents(d.financial?.deliveryFeeCents)}</td>
+                    <td>${escapeHtml(d.financial?.paymentMethod||'')}</td>
+                    <td>${d.financial?.changeTakenCents > 0 ? formatCents(d.financial.changeTakenCents) : '-'}</td>
+                    <td>${STATUS_LABELS[d.logistics?.status]||''}</td>
+                    <td>${formatTime(d.timestamps?.deliveredAt)}</td>
+                </tr>`).join('')}</tbody>
+            </table>
+            ${canSettle ? `<div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
+                <input class="settlement-input" id="settleNotes_${g.id}" placeholder="Observação do acerto">
+                <button class="btn-success" data-action="settle" data-motoboy="${g.id}">✓ FECHAR MOTOBOY</button>
+            </div>` : ''}
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+/* ================================================================
+   11. EVENT HANDLING (delegation-based)
+   ================================================================ */
+
+/* -- Kanban card actions -- */
+document.getElementById('kanbanBoard').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const id = parseInt(btn.dataset.id);
+    btn.disabled = true;
+
+    try {
+        if (action === 'advance') {
+            const to = btn.dataset.to;
+            if (to === STATUS.OUT_FOR_DELIVERY) {
+                const d = AppState.deliveries.find(x => x.id === id);
+                if (!d?.logistics?.motoboyId) {
+                    showToast('Atribua um motoboy antes de enviar', 'warning');
+                    btn.disabled = false; return;
+                }
+            }
+            await DeliveryService.transition(id, to);
+            /* Auto-transition DELIVERED → SETTLEMENT_PENDING */
+            if (to === STATUS.DELIVERED) {
+                try { await DeliveryService.transition(id, STATUS.SETTLEMENT_PENDING); } catch(e){}
+            }
+            showToast('Status atualizado');
+        } else if (action === 'return') {
+            openReturnModal(id);
+            btn.disabled = false; return;
+        } else if (action === 'cancel') {
+            openCancelModal(id);
+            btn.disabled = false; return;
+        } else if (action === 'edit') {
+            openDeliveryForm(id);
+        } else if (action === 'assign') {
+            openAssignMotoboyModal(id);
+            btn.disabled = false; return;
+        } else if (action === 'occur') {
+            openOccurrenceModal(id);
+            btn.disabled = false; return;
+        }
+        await refreshAndRender();
+    } catch (err) { showToast(err.message, 'error'); }
+    btn.disabled = false;
+});
+
+/* -- Motoboy view actions -- */
+document.getElementById('motoboyDeliveries').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const id = parseInt(btn.dataset.id);
+    btn.disabled = true;
+
+    try {
+        if (action === 'depart') {
+            await DeliveryService.transition(id, STATUS.OUT_FOR_DELIVERY);
+            showToast('Saída registrada');
+        } else if (action === 'complete') {
+            showConfirm('Concluir Entrega', 'Confirma a conclusão desta entrega?', async () => {
+                await DeliveryService.transition(id, STATUS.DELIVERED);
+                try { await DeliveryService.transition(id, STATUS.SETTLEMENT_PENDING); } catch(e){}
+                showToast('Entrega concluída!'); await refreshAndRender();
+            }, '✓ Concluir');
+            btn.disabled = false; return;
+        } else if (action === 'occur') {
+            openOccurrenceModal(id);
+            btn.disabled = false; return;
+        }
+        await refreshAndRender();
+    } catch (err) { showToast(err.message, 'error'); }
+    btn.disabled = false;
+});
+
+/* -- Acerto actions -- */
+document.getElementById('acertoContent').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-action="settle"]');
+    if (!btn) return;
+    const motoboyId = parseInt(btn.dataset.motoboy) || 0;
+    const notesInput = document.getElementById('settleNotes_' + motoboyId);
+    const notes = notesInput ? notesInput.value.trim() : '';
+
+    const dateFilter = document.getElementById('acertoDate').value || todayISO();
+    const toSettle = AppState.deliveries.filter(d =>
+        (d.logistics?.motoboyId == motoboyId || (!motoboyId && !d.logistics?.motoboyId)) &&
+        [STATUS.DELIVERED, STATUS.SETTLEMENT_PENDING].includes(d.logistics?.status) &&
+        (isoToDateStr(d.createdAt) === dateFilter || isoToDateStr(d.timestamps?.deliveredAt) === dateFilter)
+    );
+
+    if (!toSettle.length) { showToast('Nenhuma entrega pendente de acerto', 'warning'); return; }
+
+    const mName = toSettle[0]?.logistics?.motoboyName || 'Sem nome';
+    const calc = SettlementService.calculate(toSettle);
+
+    showConfirm(`Fechar ${mName}`,
+        `${toSettle.length} entregas serão acertadas.\n${calc.netBalance >= 0 ? 'Motoboy deve devolver: ' + formatCents(calc.netBalance) : 'Loja deve pagar: ' + formatCents(Math.abs(calc.netBalance))}${notes ? '\nObs: ' + notes : ''}`,
+        async () => {
+            await SettlementService.settle(toSettle.map(d => d.id), notes);
+            showToast('Acerto registrado!');
+            await refreshAndRender();
+        }, '✓ Confirmar Fechamento');
+});
+
+/* -- Assign Motoboy Modal -- */
+function openAssignMotoboyModal(deliveryId) {
+    const active = AppState.motoboys.filter(m => m.active !== false);
+    if (!active.length) { showToast('Cadastre um motoboy primeiro', 'warning'); return; }
+    let btns = active.map(m => `<button class="btn-outline" style="width:100%;padding:14px;font-size:14px;margin-bottom:8px" data-mid="${m.id}">${escapeHtml(m.nome)}</button>`).join('');
+    openModal('Atribuir Motoboy', btns, '');
+    const mb = document.getElementById('modalBody');
+    const clone = mb.cloneNode(true);
+    mb.replaceWith(clone);
+    clone.addEventListener('click', async (e) => {
+        const b = e.target.closest('[data-mid]');
+        if (!b) return;
+        b.disabled = true;
+        try {
+            await DeliveryService.assignMotoboy(deliveryId, parseInt(b.dataset.mid), b.textContent.trim());
+            showToast('Motoboy atribuído');
+            closeModal(); await refreshAndRender();
+        } catch (err) { showToast(err.message, 'error'); b.disabled = false; }
+    });
+}
+
+/* -- Occurrence Modal -- */
+function openOccurrenceModal(deliveryId) {
+    const opts = OCCURRENCE_TYPES.map(t => `<option>${escapeHtml(t)}</option>`).join('');
+    openModal('Registrar Ocorrência',
+        `<div class="form-group"><label class="form-label">Tipo</label><select class="form-select" id="occurType">${opts}</select></div>
+         <div class="form-group"><label class="form-label">Observação (opcional)</label><textarea class="form-input" id="occurObs" rows="3"></textarea></div>`,
+        `<button class="btn-outline" onclick="closeModal()">Cancelar</button>
+         <button class="btn-primary" id="btnSaveOccur">Registrar</button>`);
+    document.getElementById('btnSaveOccur').addEventListener('click', async function() {
+        this.disabled = true;
+        try {
+            await DeliveryService.addOccurrence(deliveryId, document.getElementById('occurType').value, document.getElementById('occurObs').value);
+            showToast('Ocorrência registrada');
+            closeModal(); await refreshAndRender();
+        } catch(e) { showToast(e.message, 'error'); this.disabled = false; }
+    }, { once: true });
+}
+
+/* -- Return Modal -- */
+function openReturnModal(deliveryId) {
+    const reasons = [
+        'Cliente ausente',
+        'Endereço incorreto',
+        'Cliente recusou',
+        'Problema de pagamento',
+        'Problema operacional',
+        'Outro'
+    ];
+    const opts = reasons.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('');
+    openModal('↩ Registrar Retorno da Entrega',
+        `<p style="font-size:13px;color:var(--text-sec);margin-bottom:12px">Selecione o motivo pelo qual a entrega não pôde ser concluída e retornou à loja:</p>
+         <div class="form-group"><label class="form-label" for="returnReason">Motivo do Retorno *</label>
+             <select class="form-select" id="returnReason">${opts}</select></div>
+         <div class="form-group"><label class="form-label" for="returnObs">Observação Adicional (opcional)</label>
+             <textarea class="form-input" id="returnObs" rows="3" placeholder="Detalhes adicionais..."></textarea></div>`,
+        `<button class="btn-outline" onclick="closeModal()">Cancelar</button>
+         <button class="btn-danger" id="btnConfirmReturn">Confirmar Retorno</button>`);
+
+    document.getElementById('btnConfirmReturn').addEventListener('click', async function() {
+        const reason = document.getElementById('returnReason').value;
+        const obs = document.getElementById('returnObs').value.trim();
+        this.disabled = true; this.textContent = 'Processando...';
+        try {
+            await DeliveryService.transition(deliveryId, STATUS.RETURN_PENDING);
+            await DeliveryService.addOccurrence(deliveryId, {
+                type: 'Retorno',
+                reason,
+                notes: obs,
+                obs: obs,
+                at: now()
+            });
+            showToast('Retorno registrado com sucesso!');
+            closeModal();
+            await refreshAndRender();
+        } catch(e) {
+            showToast(e.message, 'error');
+            this.disabled = false; this.textContent = 'Confirmar Retorno';
+        }
+    }, { once: true });
+}
+
+/* -- Cancel Modal -- */
+function openCancelModal(deliveryId) {
+    const reasons = [
+        'Cliente desistiu da compra',
+        'Demora na entrega',
+        'Endereço não atendido',
+        'Problema operacional',
+        'Outro'
+    ];
+    const opts = reasons.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('');
+    openModal('✕ Cancelar Entrega',
+        `<p style="font-size:13px;color:var(--text-sec);margin-bottom:12px">Confirma o cancelamento desta entrega? O histórico e timestamps anteriores serão preservados.</p>
+         <div class="form-group"><label class="form-label" for="cancelReason">Motivo do Cancelamento *</label>
+             <select class="form-select" id="cancelReason">${opts}</select></div>
+         <div class="form-group"><label class="form-label" for="cancelObs">Observação (opcional)</label>
+             <textarea class="form-input" id="cancelObs" rows="2" placeholder="Detalhes adicionais..."></textarea></div>`,
+        `<button class="btn-outline" onclick="closeModal()">Voltar</button>
+         <button class="btn-danger" id="btnConfirmCancel">Confirmar Cancelamento</button>`);
+
+    document.getElementById('btnConfirmCancel').addEventListener('click', async function() {
+        const reason = document.getElementById('cancelReason').value;
+        const obs = document.getElementById('cancelObs').value.trim();
+        this.disabled = true; this.textContent = 'Cancelando...';
+        try {
+            await DeliveryService.transition(deliveryId, STATUS.CANCELLED);
+            await DeliveryService.addOccurrence(deliveryId, {
+                type: 'Cancelamento',
+                reason,
+                notes: obs,
+                obs: obs,
+                at: now()
+            });
+            showToast('Entrega cancelada!');
+            closeModal();
+            await refreshAndRender();
+        } catch(e) {
+            showToast(e.message, 'error');
+            this.disabled = false; this.textContent = 'Confirmar Cancelamento';
+        }
+    }, { once: true });
+}
+
+/* -- Tab Navigation -- */
+document.getElementById('tabNav').addEventListener('click', (e) => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    switchTab(btn.dataset.tab);
+});
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.tab-view').forEach(v => v.classList.toggle('active', v.id === 'view' + tab.charAt(0).toUpperCase() + tab.slice(1)));
+    AppState.currentView = tab;
+    if (tab === 'motoboy') renderMotoboyView();
+    if (tab === 'acerto') renderAcerto();
+}
+
+/* -- Search & Filters -- */
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    AppState.filters.search = e.target.value.trim();
+    renderKanban();
+});
+document.getElementById('filterStatus').addEventListener('change', (e) => {
+    AppState.filters.status = e.target.value;
+    renderKanban();
+});
+document.getElementById('filterMotoboyExp').addEventListener('change', (e) => {
+    AppState.filters.motoboyId = e.target.value;
+    renderKanban();
+});
+document.getElementById('motoboyViewSelect').addEventListener('change', () => {
+    try { localStorage.setItem(APP_CONFIG.motoboySelectionKey, document.getElementById('motoboyViewSelect').value); } catch(e){}
+    renderMotoboyView();
+});
+document.getElementById('acertoDate').addEventListener('change', () => renderAcerto());
+document.getElementById('acertoMotoboyFilter').addEventListener('change', () => renderAcerto());
+
+/* -- Header Buttons -- */
+document.getElementById('btnNewDelivery').addEventListener('click', () => openDeliveryForm());
+document.getElementById('btnManageMotoboys').addEventListener('click', () => openMotoboyManager());
+document.getElementById('btnTheme').addEventListener('click', () => {
+    const dark = document.body.getAttribute('data-theme') === 'dark';
+    document.body.setAttribute('data-theme', dark ? '' : 'dark');
+    document.getElementById('btnTheme').textContent = dark ? '🌙' : '☀️';
+    try { localStorage.setItem(APP_CONFIG.themeKey, dark ? '' : 'dark'); } catch(e){}
+});
+document.getElementById('btnBackup').addEventListener('click', openBackupModal);
+document.getElementById('btnPrint').addEventListener('click', () => printGeneralReport());
+document.getElementById('btnPrintSettlement').addEventListener('click', () => printSettlementReport());
+
+/* -- Modal close -- */
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+
+/* -- Drag and Drop -- */
+let draggedId = null;
+document.getElementById('kanbanBoard').addEventListener('dragstart', (e) => {
+    const card = e.target.closest('.k-card');
+    if (!card) return;
+    draggedId = parseInt(card.dataset.id);
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', draggedId);
+});
+document.getElementById('kanbanBoard').addEventListener('dragend', (e) => {
+    const card = e.target.closest('.k-card');
+    if (card) card.classList.remove('dragging');
+    document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'));
+});
+document.getElementById('kanbanBoard').addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const col = e.target.closest('.kanban-col');
+    if (col) { document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over')); col.classList.add('drag-over'); }
+});
+document.getElementById('kanbanBoard').addEventListener('dragleave', (e) => {
+    const col = e.target.closest('.kanban-col');
+    if (col && !col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+});
+document.getElementById('kanbanBoard').addEventListener('drop', async (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'));
+    const col = e.target.closest('.kanban-col');
+    if (!col || !draggedId) return;
+    const targetStatus = col.dataset.status;
+    const d = AppState.deliveries.find(x => x.id === draggedId);
+    if (!d) return;
+    const currentStatus = d.logistics?.status;
+    if (currentStatus === targetStatus) return;
+
+    /* Validate transition */
+    const allowed = STATUS_TRANSITIONS[currentStatus] || [];
+    /* For the DELIVERED column, also accept SETTLEMENT_PENDING transition from DELIVERED */
+    let finalTarget = targetStatus;
+    if (targetStatus === 'DELIVERED') {
+        if (currentStatus === STATUS.OUT_FOR_DELIVERY) finalTarget = STATUS.DELIVERED;
+        else { showToast('Transição não permitida', 'warning'); return; }
+    }
+    if (targetStatus === 'RETURN_PENDING') {
+        if (allowed.includes(STATUS.RETURN_PENDING)) {
+            openReturnModal(draggedId);
+            return;
+        } else {
+            showToast('Transição não permitida', 'warning'); return;
+        }
+    }
+
+    if (!allowed.includes(finalTarget)) { showToast('Transição não permitida', 'warning'); return; }
+
+    try {
+        if (finalTarget === STATUS.OUT_FOR_DELIVERY && !d.logistics?.motoboyId) {
+            showToast('Atribua um motoboy antes de enviar', 'warning'); return;
+        }
+        await DeliveryService.transition(draggedId, finalTarget);
+        if (finalTarget === STATUS.DELIVERED) {
+            try { await DeliveryService.transition(draggedId, STATUS.SETTLEMENT_PENDING); } catch(e){}
+        }
+        showToast('Status atualizado');
+        await refreshAndRender();
+    } catch (err) { showToast(err.message, 'error'); }
+});
+
+/* -- Keyboard Shortcuts -- */
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        const overlay = document.getElementById('modalOverlay');
+        if (overlay && overlay.classList.contains('visible')) return;
+        if (AppState.currentView === 'acerto') {
+            printSettlementReport();
+        } else {
+            printGeneralReport();
+        }
+        return;
+    }
+
+    const tag = document.activeElement?.tagName;
+    if (['INPUT','TEXTAREA','SELECT'].includes(tag)) { if (e.key === 'Escape') document.activeElement.blur(); return; }
+    if (e.key === 'Escape') { closeModal(); return; }
+    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openDeliveryForm(); }
+    if (e.key === 'f' || e.key === 'F') { e.preventDefault(); document.getElementById('searchInput').focus(); }
+    if (e.key === '1') switchTab('expedicao');
+    if (e.key === '2') switchTab('motoboy');
+    if (e.key === '3') switchTab('acerto');
+});
+
+/* ================================================================
+   12. BACKUP & RESTORE
+   ================================================================ */
+function openBackupModal() {
+    openModal('Backup e Restauração',
+        `<div style="margin-bottom:20px">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:8px">Exportar Backup</h3>
+            <p style="font-size:12px;color:var(--text-sec);margin-bottom:8px">Exporta todas as entregas, motoboys e configurações em formato JSON.</p>
+            <button class="btn-primary" id="btnExportBackup" style="width:100%">💾 Exportar Backup</button>
+        </div>
+        <hr style="border-color:var(--border);margin:16px 0">
+        <div>
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:8px">Importar Backup</h3>
+            <p style="font-size:12px;color:var(--text-sec);margin-bottom:8px">Importa dados de um arquivo de backup. Os dados existentes NÃO serão apagados — os registros serão adicionados.</p>
+            <input type="file" accept=".json" id="fileImportBackup" class="form-input" style="padding:8px">
+            <button class="btn-outline" id="btnImportBackup" style="width:100%;margin-top:8px" disabled>📥 Importar</button>
+            <p id="importPreview" style="font-size:11px;color:var(--text-muted);margin-top:8px"></p>
+        </div>
+        <hr style="border-color:var(--border);margin:16px 0">
+        <div>
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;color:var(--danger)">Zona de Perigo</h3>
+            <button class="btn-danger" id="btnClearAll" style="width:100%">🗑 Excluir Todo Histórico Local</button>
+        </div>`, '');
+
+    /* Export */
+    document.getElementById('btnExportBackup').addEventListener('click', async () => {
+        try {
+            const data = await BackupService.exportData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup-entregas-${todayISO()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Backup exportado!');
+        } catch(e) { showToast('Erro ao exportar: ' + e.message, 'error'); }
+    });
+
+    /* Import */
+    let importData = null;
+    document.getElementById('fileImportBackup').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                importData = JSON.parse(ev.target.result);
+                const v = BackupService.validate(importData);
+                const preview = document.getElementById('importPreview');
+                const btn = document.getElementById('btnImportBackup');
+                if (v.valid) {
+                    preview.textContent = `✓ Arquivo válido: ${v.deliveries} entregas, ${v.motoboys} motoboys`;
+                    preview.style.color = 'var(--success)';
+                    btn.disabled = false;
+                } else {
+                    preview.textContent = '✕ ' + v.error;
+                    preview.style.color = 'var(--danger)';
+                    btn.disabled = true;
+                }
+            } catch(err) {
+                document.getElementById('importPreview').textContent = '✕ Arquivo JSON inválido';
+                document.getElementById('importPreview').style.color = 'var(--danger)';
+            }
+        };
+        reader.readAsText(file);
+    });
+    document.getElementById('btnImportBackup').addEventListener('click', () => {
+        if (!importData) return;
+        const v = BackupService.validate(importData);
+        showConfirm('Importar Backup', `Serão importados ${v.deliveries} entregas e ${v.motoboys} motoboys. Os dados existentes NÃO serão removidos.`,
+            async () => {
+                const count = await BackupService.importData(importData);
+                showToast(`${count} registros importados!`);
+                await refreshAndRender();
+            }, 'Importar');
+    });
+
+    /* Clear All */
+    document.getElementById('btnClearAll').addEventListener('click', () => {
+        openModal('⚠ Excluir Todo Histórico',
+            `<p style="font-size:14px;color:var(--danger);font-weight:700;margin-bottom:12px">ATENÇÃO: Esta ação é irreversível!</p>
+             <p style="font-size:13px;color:var(--text-sec);margin-bottom:12px">Todos os registros de entregas serão permanentemente removidos do dispositivo. Recomendamos fazer um backup antes.</p>
+             <div class="form-group"><label class="form-label" for="confirmClearText">Digite "EXCLUIR" para confirmar:</label>
+                 <input class="form-input" id="confirmClearText" placeholder="EXCLUIR"></div>`,
+            `<button class="btn-outline" onclick="closeModal()">Cancelar</button>
+             <button class="btn-danger" id="btnConfirmClear" disabled>Excluir Permanentemente</button>`);
+        document.getElementById('confirmClearText').addEventListener('input', (e) => {
+            document.getElementById('btnConfirmClear').disabled = e.target.value.trim() !== 'EXCLUIR';
+        });
+        document.getElementById('btnConfirmClear').addEventListener('click', async () => {
+            try {
+                await DeliveryRepo.clear();
+                showToast('Histórico excluído');
+                closeModal(); await refreshAndRender();
+            } catch(e) { showToast(e.message, 'error'); }
+        }, { once: true });
+    });
+}
+
+/* ================================================================
+   13. PRINT & REPORTS
+   ================================================================ */
+function printGeneralReport() {
+    const dateStr = formatDate(now());
+    const ds = AppState.deliveries.filter(d => isoToDateStr(d.createdAt) === todayISO());
+    const sorted = sortDeliveries(ds.slice());
+
+    let totalFees = 0, totalProduct = 0, totalChange = 0;
+    const rows = sorted.map(d => {
+        const f = d.financial || {};
+        totalFees += f.deliveryFeeCents || 0;
+        totalProduct += f.productValueCents || 0;
+        totalChange += f.changeTakenCents || 0;
+        return `<tr>
+            <td>#${escapeHtml(d.orderNum||'')}</td>
+            <td>${escapeHtml(d.destination?.bairro||'')}</td>
+            <td>${escapeHtml(d.logistics?.motoboyName||'-')}</td>
+            <td>${formatCents(f.productValueCents)}</td>
+            <td>${formatCents(f.deliveryFeeCents)}</td>
+            <td>${f.changeTakenCents>0?formatCents(f.changeTakenCents):'-'}</td>
+            <td>${escapeHtml(f.paymentMethod||'')}</td>
+            <td>${STATUS_LABELS[d.logistics?.status]||''}</td>
+            <td>${formatTime(d.timestamps?.createdAt)}</td>
+            <td>${formatTime(d.timestamps?.deliveredAt)}</td>
+            <td>${escapeHtml(d.checker||'')}</td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('printContainer').innerHTML = `
+        <h1>RELATÓRIO DE FLUXO DE ENTREGAS</h1>
+        <p><strong>${escapeHtml(STORE_CONFIG.name)}</strong> — ${escapeHtml(STORE_CONFIG.city)}, ${escapeHtml(STORE_CONFIG.state)}</p>
+        <p>Data: ${dateStr} | Emitido em: ${formatDateTime(now())}</p>
+        <table>
+            <thead><tr><th>Pedido</th><th>Bairro</th><th>Motoboy</th><th>Valor</th><th>Taxa</th><th>Troco</th><th>Pagamento</th><th>Status</th><th>Saída</th><th>Entrega</th><th>Conf.</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>
+        <div class="print-summary">
+            <h2>RESUMO</h2>
+            <p>Total de entregas: <strong>${sorted.length}</strong></p>
+            <p>Total em mercadorias: <strong>${formatCents(totalProduct)}</strong></p>
+            <p>Total em taxas: <strong>${formatCents(totalFees)}</strong></p>
+            <p>Total troco levado: <strong>${formatCents(totalChange)}</strong></p>
+        </div>
+        <div class="print-footer">Sistema ${APP_CONFIG.name} v${APP_CONFIG.version} — Gerado automaticamente</div>`;
+    setTimeout(() => window.print(), 100);
+}
+
+function printSettlementReport() {
+    const dateFilter = document.getElementById('acertoDate').value || todayISO();
+    const motoboyFilter = document.getElementById('acertoMotoboyFilter').value;
+    let dels = AppState.deliveries.filter(d =>
+        (isoToDateStr(d.createdAt) === dateFilter || isoToDateStr(d.timestamps?.deliveredAt) === dateFilter) &&
+        [STATUS.DELIVERED, STATUS.SETTLEMENT_PENDING, STATUS.SETTLED].includes(d.logistics?.status)
+    );
+    if (motoboyFilter) dels = dels.filter(d => d.logistics?.motoboyId == motoboyFilter);
+
+    const groups = {};
+    dels.forEach(d => {
+        const key = d.logistics?.motoboyId || 0;
+        const name = d.logistics?.motoboyName || 'Sem Motoboy';
+        if (!groups[key]) groups[key] = { name, deliveries: [] };
+        groups[key].deliveries.push(d);
+    });
+
+    let html = `<h1>FECHAMENTO DE ENTREGAS</h1>
+        <p><strong>${escapeHtml(STORE_CONFIG.name)}</strong> — Data: ${formatDate(dateFilter+'T00:00:00')}</p>`;
+
+    Object.values(groups).forEach(g => {
+        const calc = SettlementService.calculate(g.deliveries);
+        html += `<h2>🏍 ${escapeHtml(g.name)}</h2>
+            <div class="print-summary">
+                <p>Entregas: <strong>${calc.total}</strong> (Dinheiro: ${calc.countCash} | Outros: ${calc.countOther})</p>
+                <p>Troco levado: <strong>${formatCents(calc.cashChange)}</strong></p>
+                <p>Dinheiro em mãos: <strong>${formatCents(calc.cashInHand)}</strong></p>
+                <p>Taxas totais: <strong>${formatCents(calc.totalFees)}</strong></p>
+                <p>Motoboy deve devolver: <strong>${formatCents(calc.motoboyReturns)}</strong></p>
+                <p>Loja deve ao motoboy: <strong>${formatCents(calc.storeOwes)}</strong></p>
+            </div>
+            <table>
+                <thead><tr><th>Pedido</th><th>Bairro</th><th>Valor</th><th>Taxa</th><th>Pagamento</th><th>Troco</th><th>Hora</th></tr></thead>
+                <tbody>${g.deliveries.map(d => `<tr>
+                    <td>#${escapeHtml(d.orderNum||'')}</td>
+                    <td>${escapeHtml(d.destination?.bairro||'')}</td>
+                    <td>${formatCents(d.financial?.productValueCents)}</td>
+                    <td>${formatCents(d.financial?.deliveryFeeCents)}</td>
+                    <td>${escapeHtml(d.financial?.paymentMethod||'')}</td>
+                    <td>${d.financial?.changeTakenCents>0?formatCents(d.financial.changeTakenCents):'-'}</td>
+                    <td>${formatTime(d.timestamps?.deliveredAt)}</td>
+                </tr>`).join('')}</tbody>
+            </table>`;
+    });
+    html += `<div class="print-footer">Sistema ${APP_CONFIG.name} v${APP_CONFIG.version} — Gerado em ${formatDateTime(now())}</div>`;
+    document.getElementById('printContainer').innerHTML = html;
+    setTimeout(() => window.print(), 100);
+}
+
+/* ================================================================
+   14. PWA
+   ================================================================ */
+let deferredPWAPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPWAPrompt = e;
+    document.getElementById('pwaBanner').classList.add('visible');
+});
+document.getElementById('btnInstallPwa').addEventListener('click', () => {
+    if (deferredPWAPrompt) { deferredPWAPrompt.prompt(); deferredPWAPrompt = null; }
+    document.getElementById('pwaBanner').classList.remove('visible');
+});
+document.getElementById('btnDismissPwa').addEventListener('click', () => {
+    document.getElementById('pwaBanner').classList.remove('visible');
+});
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').then(reg => {
+            reg.onupdatefound = () => {
+                const w = reg.installing;
+                w.onstatechange = () => {
+                    if (w.state === 'activated') showToast('App atualizado! Recarregue para aplicar.', 'info');
+                };
+            };
+        }).catch(() => { /* SW not available, ignore for local file usage */ });
+    });
+}
+
+/* ================================================================
+   15. TIMER — update time badges every 30s
+   ================================================================ */
+function startTimer() {
+    if (AppState.timerRef) clearInterval(AppState.timerRef);
+    AppState.timerRef = setInterval(() => {
+        if (AppState.currentView === 'expedicao') {
+            document.querySelectorAll('.k-card[data-status="OUT_FOR_DELIVERY"], .k-card[data-status="PREPARO"], .k-card[data-status="READY"], .k-card[data-status="RETURN_PENDING"]').forEach(card => {
+                const id = parseInt(card.dataset.id);
+                const d = AppState.deliveries.find(x => x.id === id);
+                if (!d) return;
+                const badge = card.querySelector('.k-card-time');
+                if (!badge) return;
+
+                const st = d.logistics?.status;
+                if (st === STATUS.OUT_FOR_DELIVERY && d.timestamps?.departedAt) {
+                    const min = getElapsedMin(d.timestamps.departedAt);
+                    const dist = isDistrictNeighborhood(d.destination?.bairro);
+                    const lvl = getDelayLevel(min, dist);
+                    badge.textContent = min + ' min'; badge.className = 'k-card-time delay-' + lvl;
+                } else if (st === STATUS.RETURN_PENDING) {
+                    const refTime = d.timestamps?.returnedAt || d.updatedAt || d.timestamps?.departedAt;
+                    const min = getElapsedMin(refTime);
+                    badge.textContent = '↩ ' + min + ' min'; badge.className = 'k-card-time delay-red';
+                } else if (st === STATUS.PREPARO && d.timestamps?.createdAt) {
+                    const min = getElapsedMin(d.timestamps.createdAt);
+                    badge.textContent = min + ' min'; badge.className = 'k-card-time delay-green';
+                } else if (st === STATUS.READY && d.timestamps?.readyAt) {
+                    const min = getElapsedMin(d.timestamps.readyAt);
+                    badge.textContent = min + ' min'; badge.className = 'k-card-time delay-' + (min > 15 ? 'yellow' : 'green');
+                }
+            });
+            renderDashboard();
+        } else if (AppState.currentView === 'motoboy') {
+            document.querySelectorAll('.m-card-timer').forEach(el => {
+                const card = el.closest('.m-card');
+                if (!card) return;
+                const id = parseInt(card.dataset.id);
+                const d = AppState.deliveries.find(x => x.id === id);
+                if (!d || !d.timestamps?.departedAt) return;
+                const min = getElapsedMin(d.timestamps.departedAt);
+                const lvl = getDelayLevel(min, isDistrictNeighborhood(d.destination?.bairro));
+                el.textContent = min + ' min em rota';
+                el.className = 'm-card-timer delay-' + lvl;
+            });
+        }
+    }, APP_CONFIG.timerIntervalMs);
+}
+
+/* ================================================================
+   16. RENDER ALL
+   ================================================================ */
+async function refreshAndRender() {
+    await refreshData();
+    renderDashboard();
+    renderKanban();
+    if (AppState.currentView === 'motoboy') renderMotoboyView();
+    if (AppState.currentView === 'acerto') renderAcerto();
+    updateMotoboySelects();
+}
+
+/* ================================================================
+   17. BOOTSTRAP
+   ================================================================ */
+(async function init() {
+    /* Theme */
+    try { const t = localStorage.getItem(APP_CONFIG.themeKey); if (t === 'dark') { document.body.setAttribute('data-theme','dark'); document.getElementById('btnTheme').textContent = '☀️'; } } catch(e){}
+
+    /* Date displays */
+    document.getElementById('headerDate').textContent = new Date().toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'short' });
+    document.getElementById('acertoDate').value = todayISO();
+
+    try {
+        await DB.open();
+
+        /* Run migration */
+        const migrated = await migrateData();
+        if (migrated > 0) showToast(`${migrated} registros migrados do sistema anterior`, 'info');
+
+        /* Load data */
+        await refreshData();
+
+        /* Restore motoboy selection */
+        try { const ms = localStorage.getItem(APP_CONFIG.motoboySelectionKey); if (ms) document.getElementById('motoboyViewSelect').value = ms; } catch(e){}
+
+        /* Render */
+        renderDashboard();
+        renderKanban();
+        updateMotoboySelects();
+        startTimer();
+
+    } catch (err) {
+        showToast('Erro ao inicializar: ' + err.message, 'error');
+        console.error('Init error:', err);
+    }
+})();
+</script>
+</body>
+</html>

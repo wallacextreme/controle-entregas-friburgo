@@ -1,0 +1,26 @@
+{
+    "name": "Controle de Entregas — Autopeças",
+    "short_name": "Entregas",
+    "description": "Sistema de controle de entregas para autopeças - Nova Friburgo RJ",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#1e293b",
+    "theme_color": "#1e293b",
+    "lang": "pt-BR",
+    "categories": ["business", "productivity"],
+    "icons": [
+        {
+            "src": "./icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "./icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}
