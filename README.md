@@ -207,3 +207,20 @@ Para experimentar todas as etapas do fluxo operacional com dados fictícios:
 * [Documentação Técnica e Arquitetura](docs/TECHNICAL.md) — Detalhamento técnico de schemas, state machine e algoritmos.
 * [Relatório de Homologação Go-Live](docs/GO-LIVE.md) — Resultados completos da suíte de 136 testes e homologação final.
 * [Histórico de Mudanças](CHANGELOG.md) — Registro das melhorias e versões da aplicação.
+
+---
+## ☕ Apoie este Projeto
+
+Se este projeto ou código foi útil para você, considere apoiar o meu trabalho com uma doação espontânea de qualquer valor. Sua contribuição ajuda a manter o desenvolvimento de novas ferramentas e soluções open-source!
+
+<details>
+<summary><strong>💠 Clique aqui para exibir os dados do PIX (Doação Voluntária)</strong></summary>
+
+<br>
+
+- **Chave PIX (ALEATORIA):** `91afe4f0-a466-4423-9d9c-d6a0ffea9b3e`
+- **Banco:** C6 Bank
+- **Titular:** Wallace de Paulo Soares
+
+> *Nota Legal: Contribuição 100% voluntária e espontânea de apoio ao desenvolvedor (Art. 538 do Código Civil).*
+</details>
